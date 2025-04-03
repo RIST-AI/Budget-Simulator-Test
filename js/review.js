@@ -223,6 +223,39 @@ async function loadSubmissions(status = 'active') {
     }
 }
 
+// View public URL in new tab
+async function viewPublicUrl(submissionId) {
+    try {
+        const submissionRef = doc(db, 'assessments', submissionId);
+        const submissionDoc = await getDoc(submissionRef);
+        
+        if (!submissionDoc.exists()) {
+            throw new Error("Submission not found");
+        }
+        
+        const submission = submissionDoc.data();
+        
+        if (!submission.publicAccessToken) {
+            throw new Error("This assessment doesn't have a public URL yet");
+        }
+        
+        // Generate public URL using robust path construction
+        const origin = window.location.origin;
+        const pathParts = window.location.pathname.split('/');
+        pathParts.pop(); // Remove current filename
+        const basePath = pathParts.join('/');
+        const publicUrl = `${origin}${basePath}/view-assessment.html?id=${submissionId}&token=${submission.publicAccessToken}`;
+        
+        // Open in new tab
+        window.open(publicUrl, '_blank');
+    } catch (error) {
+        console.error("Error viewing public URL:", error);
+        alert(`Error: ${error.message}`);
+    }
+}
+
+// Make the function available globally
+window.viewPublicUrl = viewPublicUrl;
 // View a submission
 async function viewSubmission(submissionId) {
     if (loadingIndicator) {
