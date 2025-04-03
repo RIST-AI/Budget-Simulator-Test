@@ -33,8 +33,8 @@ async function checkAssessmentNotifications() {
       const assessment = assessmentDoc.data();
       const status = assessment.status;
       
-      // If there's feedback or the assessment is finalized, show notification
-      if (status === 'feedback_provided' || status === 'finalized') {
+      // If there's feedback or the assessment is finalised, show notification
+      if (status === 'feedback_provided' || status === 'finalised') {
         const assessmentNavItem = document.getElementById('assessment-nav-item');
         if (assessmentNavItem) {
           const navLink = assessmentNavItem.querySelector('a');

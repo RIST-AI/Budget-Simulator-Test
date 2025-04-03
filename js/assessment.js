@@ -233,7 +233,7 @@ async function checkExistingAssessment() {
                     break;
                     
                 case 'submitted':
-                case 'finalized':
+                case 'finalised':
                     // Show message that assessment is already submitted
                     showSubmittedMessage(status, existingAssessment);
                     return; // Exit function to prevent form population
@@ -295,7 +295,7 @@ function showSubmittedMessage(status, assessment) {
                 <a href="index.html" class="btn">Return to Home</a>
             </div>
         `;
-    } else if (status === 'finalized') {
+    } else if (status === 'finalised') {
         // Get the latest feedback that contains the grade
         let grade = assessment.grade || 'Not specified';
         let feedbackText = 'No feedback provided.';
@@ -311,8 +311,8 @@ function showSubmittedMessage(status, assessment) {
         
         messageContainer.innerHTML = `
             <div class="info-message">
-                <h2>Assessment Finalized</h2>
-                <p>Your assessment has been graded and finalized by your trainer.</p>
+                <h2>Assessment finalised</h2>
+                <p>Your assessment has been graded and finalised by your trainer.</p>
                 <div class="grade-display">
                     <h3>Grade: ${grade}</h3>
                 </div>
@@ -320,7 +320,7 @@ function showSubmittedMessage(status, assessment) {
                     <h3>Trainer Feedback:</h3>
                     <p>${feedbackText}</p>
                 </div>
-                <p><strong>Finalized on:</strong> ${assessment.finalizedAt ? new Date(assessment.finalizedAt.seconds * 1000).toLocaleDateString() : 'Date not available'}</p>
+                <p><strong>finalised on:</strong> ${assessment.finalisedAt ? new Date(assessment.finalisedAt.seconds * 1000).toLocaleDateString() : 'Date not available'}</p>
                 <a href="index.html" class="btn">Return to Home</a>
             </div>
         `;

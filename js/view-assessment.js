@@ -40,8 +40,8 @@ async function loadAssessment(assessmentId, accessToken) {
         
         const assessment = assessmentDoc.data();
         
-        // Check if assessment is finalized and has a matching public access token
-        if (assessment.status !== 'finalized') {
+        // Check if assessment is finalised and has a matching public access token
+        if (assessment.status !== 'finalised') {
             throw new Error('This assessment is not available for public viewing');
         }
         
@@ -78,7 +78,7 @@ function populateAssessmentData(assessment) {
         submissionDateElement.textContent = new Date(assessment.submittedAt.seconds * 1000).toLocaleString();
     }
     if (submissionStatusElement) {
-        submissionStatusElement.textContent = 'Finalized';
+        submissionStatusElement.textContent = 'finalised';
     }
     
     // Budget info

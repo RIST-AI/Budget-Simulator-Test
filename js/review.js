@@ -15,13 +15,13 @@ let currentTab = 'active';
 // DOM elements
 const loadingIndicator = document.getElementById('loading-indicator');
 const activeTab = document.getElementById('active-tab');
-const finalizedTab = document.getElementById('finalized-tab');
+const finalisedTab = document.getElementById('finalised-tab');
 const activeAssessmentsContainer = document.getElementById('active-assessments-container');
-const finalizedAssessmentsContainer = document.getElementById('finalized-assessments-container');
+const finalisedAssessmentsContainer = document.getElementById('finalised-assessments-container');
 const assessmentDetail = document.getElementById('assessment-detail');
 const backToListButton = document.getElementById('back-to-list');
 const activeSearchInput = document.getElementById('active-search-input');
-const finalizedSearchInput = document.getElementById('finalized-search-input');
+const finalisedSearchInput = document.getElementById('finalised-search-input');
 
 // Modal elements
 const confirmModal = document.getElementById('confirm-modal');
@@ -113,7 +113,7 @@ async function loadSubmissions(status = 'active') {
     
     const container = status === 'active' ? 
         activeAssessmentsContainer : 
-        finalizedAssessmentsContainer;
+        finalisedAssessmentsContainer;
         
     if (!container) {
         if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -135,11 +135,11 @@ async function loadSubmissions(status = 'active') {
                 where("status", "in", ["submitted", "feedback_provided"])
             );
         } else {
-            // Finalized tab shows finalized submissions
+            // finalised tab shows finalised submissions
             q = query(
                 assessmentsRef,
                 where("submitted", "==", true),
-                where("status", "==", "finalized")
+                where("status", "==", "finalised")
             );
         }
         
@@ -320,15 +320,15 @@ async function viewSubmission(submissionId) {
         
         // Show appropriate action buttons based on status
         const feedbackActions = document.getElementById('feedback-actions');
-        const finalizedActions = document.getElementById('finalized-actions');
+        const finalisedActions = document.getElementById('finalised-actions');
         
         if (feedbackActions) feedbackActions.style.display = 'none';
-        if (finalizedActions) finalizedActions.style.display = 'none';
+        if (finalisedActions) finalisedActions.style.display = 'none';
         
         if (currentSubmissionStatus === 'submitted' || currentSubmissionStatus === 'feedback_provided') {
             if (feedbackActions) feedbackActions.style.display = 'block';
-        } else if (currentSubmissionStatus === 'finalized') {
-            if (finalizedActions) finalizedActions.style.display = 'block';
+        } else if (currentSubmissionStatus === 'finalised') {
+            if (finalisedActions) finalisedActions.style.display = 'block';
         }
         
         // Fill in budget info
@@ -473,10 +473,10 @@ async function viewSubmission(submissionId) {
             }
         }
         
-        // Show grade field if not already finalized
+        // Show grade field if not already finalised
         const gradeContainer = document.getElementById('grade-container');
         if (gradeContainer) {
-            if (currentSubmissionStatus === 'finalized') {
+            if (currentSubmissionStatus === 'finalised') {
                 gradeContainer.innerHTML = `
                     <h3>Grade</h3>
                     <p><strong>Final Grade:</strong> ${submission.grade || 'Not graded'}</p>
@@ -691,8 +691,8 @@ async function provideFeedback() {
     }
 }
 
-// Finalize assessment with grade
-async function finalizeAssessment() {
+// finalise assessment with grade
+async function finaliseAssessment() {
     const commentInput = document.getElementById('new-comment');
     const gradeSelect = document.getElementById('assessment-grade');
     
@@ -710,10 +710,10 @@ async function finalizeAssessment() {
         const user = await getCurrentUser();
         
         // Show loading indicator
-        const finalizeButton = document.getElementById('finalize-assessment');
-        if (finalizeButton) {
-            finalizeButton.disabled = true;
-            finalizeButton.textContent = 'Finalizing...';
+        const finaliseButton = document.getElementById('finalise-assessment');
+        if (finaliseButton) {
+            finaliseButton.disabled = true;
+            finaliseButton.textContent = 'Finalizing...';
         }
         
         // Generate a public access token (random string)
@@ -722,7 +722,7 @@ async function finalizeAssessment() {
         // Create feedback entry
         const feedbackEntry = {
             timestamp: new Date(),
-            comments: commentText || 'Assessment finalized.',
+            comments: commentText || 'Assessment finalised.',
             trainerEmail: user.email,
             trainerName: user.displayName || user.email,
             requestResubmission: false,
@@ -751,10 +751,10 @@ async function finalizeAssessment() {
         // Update assessment document
         const submissionRef = doc(db, 'assessments', currentSubmissionId);
         await updateDoc(submissionRef, {
-            status: 'finalized',
+            status: 'finalised',
             grade: grade,
-            finalizedAt: new Date(),
-            finalizedBy: user.uid,
+            finalisedAt: new Date(),
+            finalisedBy: user.uid,
             feedbackHistory: arrayUnion(feedbackEntry),
             publicAccessToken: publicAccessToken,
             studentName: studentName // Store student name for public view
@@ -789,7 +789,7 @@ async function finalizeAssessment() {
         }
         
         // Show success message with public URL
-        const message = `Assessment finalized successfully with grade: ${grade}\n\nPublic URL (copy to share):\n${publicUrl}`;
+        const message = `Assessment finalised successfully with grade: ${grade}\n\nPublic URL (copy to share):\n${publicUrl}`;
         alert(message);
         
         // Copy URL to clipboard
@@ -809,10 +809,10 @@ async function finalizeAssessment() {
         alert(`Error finalizing assessment: ${error.message}`);
     } finally {
         // Reset button
-        const finalizeButton = document.getElementById('finalize-assessment');
-        if (finalizeButton) {
-            finalizeButton.disabled = false;
-            finalizeButton.textContent = 'Grade & Finalize Assessment';
+        const finaliseButton = document.getElementById('finalise-assessment');
+        if (finaliseButton) {
+            finaliseButton.disabled = false;
+            finaliseButton.textContent = 'Grade & finalise Assessment';
         }
         
         // Clear comment input
@@ -872,7 +872,7 @@ async function copyPublicUrl() {
 // Make the function available globally for event handlers
 window.copyPublicUrl = copyPublicUrl;
 
-// Reopen a finalized submission
+// Reopen a finalised submission
 async function reopenSubmission(submissionId) {
     showModal(
         "Reopen Submission",
@@ -924,10 +924,10 @@ function setupSearch() {
         });
     }
     
-    if (finalizedSearchInput) {
-        finalizedSearchInput.addEventListener('input', (e) => {
+    if (finalisedSearchInput) {
+        finalisedSearchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            filterSubmissions(finalizedAssessmentsContainer, searchTerm);
+            filterSubmissions(finalisedAssessmentsContainer, searchTerm);
         });
     }
 }
@@ -958,9 +958,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check for tab elements
         console.log("Tab elements:", {
             activeTab: !!activeTab,
-            finalizedTab: !!finalizedTab,
+            finalisedTab: !!finalisedTab,
             activeAssessmentsContainer: !!activeAssessmentsContainer,
-            finalizedAssessmentsContainer: !!finalizedAssessmentsContainer,
+            finalisedAssessmentsContainer: !!finalisedAssessmentsContainer,
             assessmentDetail: !!assessmentDetail
         });
         
@@ -988,10 +988,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 provideFeedback();
             }
             
-            // Finalize assessment button
-            if (e.target && e.target.id === 'finalize-assessment') {
-                console.log("Finalize assessment clicked");
-                finalizeAssessment();
+            // finalise assessment button
+            if (e.target && e.target.id === 'finalise-assessment') {
+                console.log("finalise assessment clicked");
+                finaliseAssessment();
             }
             
             // Reopen assessment button

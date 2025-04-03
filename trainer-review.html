@@ -235,7 +235,7 @@
         <div class="tab-container">
             <div class="tab-buttons">
                 <button class="tab-button active" data-tab="active">Active Submissions</button>
-                <button class="tab-button" data-tab="finalized">Finalised Submissions</button>
+                <button class="tab-button" data-tab="finalised">Finalised Submissions</button>
             </div>
             
             <div id="active-tab" class="tab-content active">
@@ -248,13 +248,13 @@
                 </div>
             </div>
             
-            <div id="finalized-tab" class="tab-content">
-                <h2>Finalized Submissions</h2>
+            <div id="finalised-tab" class="tab-content">
+                <h2>finalised Submissions</h2>
                 <div class="search-container">
-                    <input type="text" id="finalized-search-input" class="search-input" placeholder="Search finalized submissions...">
+                    <input type="text" id="finalised-search-input" class="search-input" placeholder="Search finalised submissions...">
                 </div>
-                <div id="finalized-assessments-container">
-                    <!-- Finalized assessments will be loaded here -->
+                <div id="finalised-assessments-container">
+                    <!-- finalised assessments will be loaded here -->
                 </div>
             </div>
         </div>
@@ -369,10 +369,10 @@
                     <div id="feedback-actions" style="display: none;">
                         <h3>Assessment Actions</h3>
                         <button id="provide-feedback" class="btn btn-primary">Provide Feedback & Request Resubmission</button>
-                        <button id="finalize-assessment" class="btn btn-success">Grade & Finalize Assessment</button>
+                        <button id="finalise-assessment" class="btn btn-success">Grade & finalise Assessment</button>
                     </div>
                     
-                    <div id="finalized-actions" style="display: none;">
+                    <div id="finalised-actions" style="display: none;">
                         <h3>Assessment Actions</h3>
                         <button id="copy-public-url" class="btn">Copy Public URL</button>
                         <button id="reopen-assessment" class="btn btn-warning">Return to Resubmission</button>
