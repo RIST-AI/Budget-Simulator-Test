@@ -197,7 +197,8 @@ async function loadSubmissions(status = 'active') {
                             <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
                             ${status === 'active' ? 
                                 `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
-                                `<button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
+                                `<button class="btn btn-primary" onclick="viewPublicUrl('${submission.id}')">View Public URL</button>
+                                <button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
                                 <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
                             }
                         </div>
@@ -682,6 +683,9 @@ async function finalizeAssessment() {
             finalizeButton.textContent = 'Finalizing...';
         }
         
+        // Generate a public access token (random string)
+        const publicAccessToken = generateAccessToken();
+        
         // Create feedback entry
         const feedbackEntry = {
             timestamp: new Date(),
@@ -692,6 +696,25 @@ async function finalizeAssessment() {
             grade: grade
         };
         
+        // Get student name if available
+        let studentName = '';
+        try {
+            if (currentSubmissionId) {
+                const submissionDoc = await getDoc(doc(db, 'assessments', currentSubmissionId));
+                if (submissionDoc.exists()) {
+                    const submission = submissionDoc.data();
+                    if (submission.userId) {
+                        const userDoc = await getDoc(doc(db, 'users', submission.userId));
+                        if (userDoc.exists()) {
+                            studentName = userDoc.data().fullName || '';
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching student name:", error);
+        }
+        
         // Update assessment document
         const submissionRef = doc(db, 'assessments', currentSubmissionId);
         await updateDoc(submissionRef, {
@@ -699,14 +722,20 @@ async function finalizeAssessment() {
             grade: grade,
             finalizedAt: new Date(),
             finalizedBy: user.uid,
-            feedbackHistory: arrayUnion(feedbackEntry)
+            feedbackHistory: arrayUnion(feedbackEntry),
+            publicAccessToken: publicAccessToken,
+            studentName: studentName // Store student name for public view
         });
+        
+        // Generate public URL
+        const baseUrl = window.location.origin + window.location.pathname.replace('trainer-review.html', 'view-assessment.html');
+        const publicUrl = `${baseUrl}?id=${currentSubmissionId}&token=${publicAccessToken}`;
         
         // Add comment to comments collection if provided
         if (commentText) {
             const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
             await addDoc(commentsRef, {
-                text: commentText + `\n\nGrade: ${grade}`,  // Include grade in comment
+                text: commentText + `\n\nGrade: ${grade}`,
                 trainerId: user.uid,
                 trainerName: user.displayName || user.email,
                 timestamp: serverTimestamp(),
@@ -726,8 +755,17 @@ async function finalizeAssessment() {
             });
         }
         
-        // Show success message
-        alert(`Assessment finalized successfully with grade: ${grade}`);
+        // Show success message with public URL
+        const message = `Assessment finalized successfully with grade: ${grade}\n\nPublic URL (copy to share):\n${publicUrl}`;
+        alert(message);
+        
+        // Copy URL to clipboard
+        try {
+            await navigator.clipboard.writeText(publicUrl);
+            console.log('Public URL copied to clipboard');
+        } catch (err) {
+            console.error('Failed to copy URL: ', err);
+        }
         
         // Return to list view and reload submissions
         showAssessmentsList();
@@ -751,6 +789,55 @@ async function finalizeAssessment() {
         }
     }
 }
+
+// Generate a random access token
+function generateAccessToken() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 20; i++) {
+        token += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return token;
+}
+
+// Copy public URL to clipboard
+async function copyPublicUrl() {
+    if (!currentSubmissionId) return;
+    
+    try {
+        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionDoc = await getDoc(submissionRef);
+        
+        if (!submissionDoc.exists()) {
+            throw new Error("Submission not found");
+        }
+        
+        const submission = submissionDoc.data();
+        
+        if (!submission.publicAccessToken) {
+            throw new Error("This assessment doesn't have a public URL yet");
+        }
+        
+        // Generate public URL - made more robust by not assuming exact filename
+        const origin = window.location.origin;
+        const pathParts = window.location.pathname.split('/');
+        // Remove the last part (current filename) and add view-assessment.html
+        pathParts.pop();
+        const basePath = pathParts.join('/');
+        const publicUrl = `${origin}${basePath}/view-assessment.html?id=${currentSubmissionId}&token=${submission.publicAccessToken}`;
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(publicUrl);
+        
+        alert("Public URL copied to clipboard!");
+    } catch (error) {
+        console.error("Error copying public URL:", error);
+        alert(`Error: ${error.message}`);
+    }
+}
+
+// Make the function available globally for event handlers
+window.copyPublicUrl = copyPublicUrl;
 
 // Reopen a finalized submission
 async function reopenSubmission(submissionId) {
@@ -885,6 +972,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Delete submission clicked");
                 deleteSubmission(currentSubmissionId);
             }
+
+            // Copy Public URL button - ADD THIS NEW CONDITION
+            if (e.target && e.target.id === 'copy-public-url') {
+                console.log("Copy public URL clicked");
+                copyPublicUrl();
+}
         });
         
         console.log("Event listeners set up successfully");
