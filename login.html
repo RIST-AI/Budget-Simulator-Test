@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Budget Simulator</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Additional login-specific styles that match your existing style */
+        .login-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo img {
+            max-width: 150px;
+            height: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #003057; /* RIST Navy color */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60; /* Green color for register */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-login:hover {
+            background-color: #004680;
+        }
+        
+        .btn-register:hover {
+            background-color: #219653;
+        }
+        
+        .btn-secondary {
+            background-color: #7f8c8d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #95a5a6;
+        }
+        
+        .login-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-top: 15px;
+            text-align: center;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success-message {
+            color: #27ae60;
+            margin-top: 15px;
+            text-align: center;
+            background-color: #d4efdf;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .form-toggle {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .form-toggle a {
+            color: #3498db;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .form-toggle a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-logo">
+            <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST Logo">
+        </div>
+        
+        <div id="login-section">
+            <h1>Login to Budget Simulator</h1>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                
+                <button type="submit" id="login-button" class="btn-login">Login</button>
+            </form>
+            
+            <div id="login-error" class="error-message"></div>
+            
+            <div class="form-toggle">
+                <p>Don't have an account? <a id="show-register">Register here</a></p>
+            </div>
+        </div>
+        
+        <div id="register-section" style="display: none;">
+            <h1>Register for Budget Simulator</h1>
+            
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-fullname">Full Name</label>
+                    <input type="text" id="register-fullname" name="fullname" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" required minlength="6">
+                    <small>Password must be at least 6 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" name="confirm-password" required minlength="6">
+                </div>
+                
+                <button type="submit" id="register-button" class="btn-register">Register</button>
+            </form>
+            
+            <div id="register-error" class="error-message"></div>
+            <div id="register-success" class="success-message"></div>
+            
+            <div class="form-toggle">
+                <p>Already have an account? <a id="show-login">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module">
+        import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, db, doc, setDoc } from './js/firebase-config.js';
+        import { redirectIfLoggedIn } from './js/auth.js';
+        
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // If user is already logged in, redirect to appropriate page
+                await redirectIfLoggedIn();
+            } catch (error) {
+                console.error("Error checking authentication:", error);
+            }
+            
+            // Set up form toggle links
+            document.getElementById('show-register').addEventListener('click', () => {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('register-section').style.display = 'block';
+            });
+            
+            document.getElementById('show-login').addEventListener('click', () => {
+                document.getElementById('register-section').style.display = 'none';
+                document.getElementById('login-section').style.display = 'block';
+            });
+        });
+        
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorMessage = document.getElementById('login-error');
+            const loginButton = document.getElementById('login-button');
+            
+            // Store the original button text BEFORE we change it
+            const originalButtonText = loginButton.textContent;
+            
+            try {
+                // Clear any previous error messages
+                errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
+                
+                // Show loading state
+                loginButton.textContent = 'Logging in...';
+                loginButton.disabled = true;
+                
+                // Attempt to sign in
+                await signInWithEmailAndPassword(auth, email, password);
+                
+                // Check if there's a redirect URL stored
+                const redirectUrl = sessionStorage.getItem('redirectUrl');
+                if (redirectUrl) {
+                    sessionStorage.removeItem('redirectUrl');
+                    window.location.href = redirectUrl;
+                } else {
+                    // Default redirect to budget.html
+                    window.location.href = 'budget.html';
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                
+                // Display user-friendly error message
+                if (error.code === 'auth/wrong-password' || 
+                    error.code === 'auth/user-not-found' || 
+                    error.code === 'auth/invalid-login-credentials') {
+                    errorMessage.textContent = 'Invalid email or password. Please try again.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage.textContent = 'Too many failed login attempts. Please try again later.';
+                } else {
+                    errorMessage.textContent = 'An error occurred during login. Please try again.';
+                }
+                
+                // Show the error message
+                errorMessage.style.display = 'block';
+                
+                // Reset button state
+                loginButton.textContent = originalButtonText;
+                loginButton.disabled = false;
+            }
+        });
+        
+        // Handle registration form submission
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('register-email').value;
+            const fullName = document.getElementById('register-fullname').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const errorMessage = document.getElementById('register-error');
+            const successMessage = document.getElementById('register-success');
+            const registerButton = document.getElementById('register-button');
+            
+            // Store the original button text BEFORE we change it
+            const originalButtonText = registerButton.textContent;
+            
+            try {
+                // Clear any previous messages
+                errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
+                successMessage.textContent = '';
+                successMessage.style.display = 'none';
+                
+                // Validate inputs
+                if (!email || !fullName || !password) {
+                    errorMessage.textContent = 'All fields are required.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = 'Passwords do not match.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    errorMessage.textContent = 'Password must be at least 6 characters.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                // Show loading state
+                registerButton.textContent = 'Registering...';
+                registerButton.disabled = true;
+                
+                // Create user account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Update user profile with full name
+                await updateProfile(user, {
+                    displayName: fullName
+                });
+                
+                // Store additional user data in Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    email: email,
+                    fullName: fullName,
+                    role: 'student', // Default role is student
+                    createdAt: new Date()
+                });
+                
+                // Show success message
+                successMessage.textContent = 'Registration successful! You can now log in.';
+                successMessage.style.display = 'block';
+                
+                // Clear form
+                document.getElementById('register-form').reset();
+                
+                // Switch to login form after a delay
+                setTimeout(() => {
+                    document.getElementById('register-section').style.display = 'none';
+                    document.getElementById('login-section').style.display = 'block';
+                }, 3000);
+                
+            } catch (error) {
+                console.error("Registration error:", error);
+                
+                // Display user-friendly error message
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage.textContent = 'This email is already registered. Please use a different email or log in.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage.textContent = 'Please enter a valid email address.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage.textContent = 'Password is too weak. Please use a stronger password.';
+                } else {
+                    errorMessage.textContent = 'An error occurred during registration. Please try again.';
+                }
+                
+                // Show the error message
+                errorMessage.style.display = 'block';
+            } finally {
+                // Reset button state
+                registerButton.textContent = originalButtonText;
+                registerButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
