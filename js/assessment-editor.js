@@ -43,6 +43,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+// Update the help text in the site settings tab
+function updateSiteSettingsHelpText() {
+    // Get the small elements that contain the help text
+    const courseNameHelp = document.querySelector('label[for="course-name"] + small');
+    const courseSubtitleHelp = document.querySelector('label[for="course-subtitle"] + small');
+    const pageTitleHelp = document.querySelector('label[for="page-title"] + small');
+    
+    if (courseNameHelp) {
+        courseNameHelp.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
+    }
+    
+    if (courseSubtitleHelp) {
+        courseSubtitleHelp.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
+    }
+    
+    if (pageTitleHelp) {
+        pageTitleHelp.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
+    }
+}
+
 // Set up event listeners for the editor
 function setupEventListeners() {
     // Check if elements exist before adding event listeners
@@ -269,6 +289,7 @@ async function loadAssessment() {
 }
 
 // Load site settings from Firestore
+// Load site settings from Firestore
 async function loadSiteSettings() {
     try {
         // Get settings document
@@ -284,21 +305,9 @@ async function loadSiteSettings() {
             document.getElementById('course-subtitle').value = siteSettings.courseSubtitle || 'Agricultural Budgeting Training Tool';
             document.getElementById('page-title').value = siteSettings.pageTitle || 'Budget Simulator - RIST Budget Master';
             
-            // Update the helper text with current values
-            const courseNameHint = document.querySelector('label[for="course-name"] + small');
-            if (courseNameHint) {
-                courseNameHint.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
-            }
+            // Update the help text
+            updateSiteSettingsHelpText();
             
-            const courseSubtitleHint = document.querySelector('label[for="course-subtitle"] + small');
-            if (courseSubtitleHint) {
-                courseSubtitleHint.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
-            }
-            
-            const pageTitleHint = document.querySelector('label[for="page-title"] + small');
-            if (pageTitleHint) {
-                pageTitleHint.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
-            }
             // Update preview
             updateSiteSettingsPreview();
         } else {
@@ -313,6 +322,9 @@ async function loadSiteSettings() {
             document.getElementById('course-name').value = siteSettings.courseName;
             document.getElementById('course-subtitle').value = siteSettings.courseSubtitle;
             document.getElementById('page-title').value = siteSettings.pageTitle;
+            
+            // Update the help text
+            updateSiteSettingsHelpText();
             
             // Update preview
             updateSiteSettingsPreview();

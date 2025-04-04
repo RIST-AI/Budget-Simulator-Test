@@ -1,9 +1,6 @@
 // js/site-config.js
 import { db, doc, getDoc } from './firebase-config.js';
 
-// Log message to help with debugging
-console.log("Site config script loaded");
-
 // Load and apply site settings
 export async function loadSiteSettings() {
     try {
@@ -18,48 +15,26 @@ export async function loadSiteSettings() {
             // Update page title
             if (settings.pageTitle) {
                 document.title = settings.pageTitle;
-                console.log("Updated page title to:", settings.pageTitle);
             }
             
-            // Update site title in header
-            const siteTitleElement = document.querySelector('.title-container h1');
-            if (siteTitleElement && settings.courseName) {
-                siteTitleElement.textContent = settings.courseName;
-                console.log("Updated header title to:", settings.courseName);
-            }
-            
-            // Update site subtitle
-            const siteSubtitleElement = document.querySelector('.title-container p');
-            if (siteSubtitleElement && settings.courseSubtitle) {
-                // Get current page
-                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                console.log("Current page:", currentPage);
-                
-                // List of pages with specific subtitles that shouldn't be overridden
-                const pagesWithSpecificSubtitles = [
-                    'assessment-editor.html', 
-                    'trainer-review.html'
-                ];
-                
-                // Only update subtitle if not on a page with specific subtitle
-                if (!pagesWithSpecificSubtitles.includes(currentPage)) {
-                    siteSubtitleElement.textContent = settings.courseSubtitle;
-                    console.log("Updated subtitle to:", settings.courseSubtitle);
-                } else {
-                    console.log("Skipping subtitle update for page with specific subtitle");
+            // Update site title in header and footer
+            const siteTitleElements = document.querySelectorAll('.title-container h1, #footer-course-name');
+            siteTitleElements.forEach(element => {
+                if (element && settings.courseName) {
+                    element.textContent = settings.courseName;
                 }
-            }
+            });
             
-            // Update footer
-            const footerCourseName = document.getElementById('footer-course-name');
-            if (footerCourseName && settings.courseName) {
-                footerCourseName.textContent = settings.courseName;
-                console.log("Updated footer course name to:", settings.courseName);
-            }
+            // Update all subtitles with the global-subtitle class
+            const globalSubtitles = document.querySelectorAll('.global-subtitle');
+            globalSubtitles.forEach(element => {
+                if (element && settings.courseSubtitle) {
+                    element.textContent = settings.courseSubtitle;
+                    console.log("Updated global subtitle to:", settings.courseSubtitle);
+                }
+            });
             
             return settings;
-        } else {
-            console.log("No site settings found in Firestore");
         }
     } catch (error) {
         console.error("Error loading site settings:", error);
@@ -72,6 +47,5 @@ export async function loadSiteSettings() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadSiteSettings);
 } else {
-    // DOM already loaded, run immediately
     loadSiteSettings();
 }
