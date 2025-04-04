@@ -44,34 +44,38 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Update the help text in the site settings tab
+// Improved approach with better condition matching
 function updateSiteSettingsHelpText() {
+    if (!siteSettings) {
+        console.error("Site settings not available for help text update");
+        return;
+    }
+    
     console.log("Updating site settings help text with:", siteSettings);
     
-    // Get the small elements with form-hint class that contain the help text
-    const courseNameHelp = document.querySelector('label[for="course-name"] + small.form-hint');
-    const courseSubtitleHelp = document.querySelector('label[for="course-subtitle"] + small.form-hint');
-    const pageTitleHelp = document.querySelector('label[for="page-title"] + small.form-hint');
+    // Find all small elements with form-hint class in the entire document
+    const allHints = document.querySelectorAll('small.form-hint');
+    console.log(`Found ${allHints.length} hint elements`, allHints);
     
-    console.log("Found help elements:", {
-        courseNameHelp,
-        courseSubtitleHelp,
-        pageTitleHelp
+    // Process each hint
+    allHints.forEach(hint => {
+        const hintText = hint.textContent;
+        console.log("Processing hint:", hintText);
+        
+        // Check which field this hint is for using more specific conditions
+        if (hintText.includes("header of all pages")) {
+            hint.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
+            console.log("Updated course name hint");
+        }
+        else if (hintText.includes("below the course name")) {
+            hint.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
+            console.log("Updated subtitle hint");
+        }
+        else if (hintText.includes("browser tab")) {
+            hint.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
+            console.log("Updated page title hint");
+        }
     });
-    
-    if (courseNameHelp && siteSettings && siteSettings.courseName) {
-        courseNameHelp.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
-        console.log("Updated course name help text");
-    }
-    
-    if (courseSubtitleHelp && siteSettings && siteSettings.courseSubtitle) {
-        courseSubtitleHelp.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
-        console.log("Updated course subtitle help text");
-    }
-    
-    if (pageTitleHelp && siteSettings && siteSettings.pageTitle) {
-        pageTitleHelp.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
-        console.log("Updated page title help text");
-    }
 }
 
 // Set up event listeners for the editor
@@ -348,6 +352,7 @@ async function loadSiteSettings() {
 }
 
 // Save site settings to Firestore
+// Save site settings to Firestore
 async function saveSiteSettings() {
     try {
         // Get values from form
@@ -381,6 +386,9 @@ async function saveSiteSettings() {
         document.querySelector('.title-container h1').textContent = settings.courseName;
         document.getElementById('footer-course-name').textContent = settings.courseName;
         document.title = settings.pageTitle;
+        
+        // Update help text with new values
+        updateSiteSettingsHelpText();
         
         // Show success message
         showStatusMessage('Site settings saved successfully!', 'success');
