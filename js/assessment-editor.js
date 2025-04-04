@@ -45,21 +45,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Update the help text in the site settings tab
 function updateSiteSettingsHelpText() {
-    // Get the small elements that contain the help text
-    const courseNameHelp = document.querySelector('label[for="course-name"] + small');
-    const courseSubtitleHelp = document.querySelector('label[for="course-subtitle"] + small');
-    const pageTitleHelp = document.querySelector('label[for="page-title"] + small');
+    console.log("Updating site settings help text with:", siteSettings);
     
-    if (courseNameHelp) {
+    // Get the small elements with form-hint class that contain the help text
+    const courseNameHelp = document.querySelector('label[for="course-name"] + small.form-hint');
+    const courseSubtitleHelp = document.querySelector('label[for="course-subtitle"] + small.form-hint');
+    const pageTitleHelp = document.querySelector('label[for="page-title"] + small.form-hint');
+    
+    console.log("Found help elements:", {
+        courseNameHelp,
+        courseSubtitleHelp,
+        pageTitleHelp
+    });
+    
+    if (courseNameHelp && siteSettings && siteSettings.courseName) {
         courseNameHelp.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
+        console.log("Updated course name help text");
     }
     
-    if (courseSubtitleHelp) {
+    if (courseSubtitleHelp && siteSettings && siteSettings.courseSubtitle) {
         courseSubtitleHelp.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
+        console.log("Updated course subtitle help text");
     }
     
-    if (pageTitleHelp) {
+    if (pageTitleHelp && siteSettings && siteSettings.pageTitle) {
         pageTitleHelp.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
+        console.log("Updated page title help text");
     }
 }
 
@@ -289,7 +300,6 @@ async function loadAssessment() {
 }
 
 // Load site settings from Firestore
-// Load site settings from Firestore
 async function loadSiteSettings() {
     try {
         // Get settings document
@@ -299,6 +309,7 @@ async function loadSiteSettings() {
         if (settingsDoc.exists()) {
             // Store settings in global variable
             siteSettings = settingsDoc.data();
+            console.log("Loaded settings from Firestore:", siteSettings);
             
             // Populate form fields
             document.getElementById('course-name').value = siteSettings.courseName || 'AHCBUS408 Budget Master';
@@ -317,6 +328,7 @@ async function loadSiteSettings() {
                 courseSubtitle: 'Agricultural Budgeting Training Tool',
                 pageTitle: 'Budget Simulator - RIST Budget Master'
             };
+            console.log("Using default settings:", siteSettings);
             
             // Populate form fields with defaults
             document.getElementById('course-name').value = siteSettings.courseName;
