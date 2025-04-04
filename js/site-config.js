@@ -27,6 +27,8 @@ export async function loadSiteSettings() {
         
         // Apply settings to the document
         applySettings(settings);
+        // Reveal the page once settings are applied
+        document.body.style.visibility = 'visible';
         
         return settings;
     } catch (error) {
@@ -35,9 +37,13 @@ export async function loadSiteSettings() {
         // Even if we have an error, try to apply default settings
         console.log("Site config: Applying default settings");
         applySettings(DEFAULT_SETTINGS);
+        // Reveal the page even on error
+        document.body.style.visibility = 'visible';
+        
         return DEFAULT_SETTINGS;
     }
 }
+
 
 // Apply settings to the document
 function applySettings(settings) {
