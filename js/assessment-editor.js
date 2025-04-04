@@ -284,6 +284,21 @@ async function loadSiteSettings() {
             document.getElementById('course-subtitle').value = siteSettings.courseSubtitle || 'Agricultural Budgeting Training Tool';
             document.getElementById('page-title').value = siteSettings.pageTitle || 'Budget Simulator - RIST Budget Master';
             
+            // Update the helper text with current values
+            const courseNameHint = document.querySelector('label[for="course-name"] + small');
+            if (courseNameHint) {
+                courseNameHint.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
+            }
+            
+            const courseSubtitleHint = document.querySelector('label[for="course-subtitle"] + small');
+            if (courseSubtitleHint) {
+                courseSubtitleHint.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
+            }
+            
+            const pageTitleHint = document.querySelector('label[for="page-title"] + small');
+            if (pageTitleHint) {
+                pageTitleHint.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
+            }
             // Update preview
             updateSiteSettingsPreview();
         } else {
