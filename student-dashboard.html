@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Student Dashboard - RIST Budget Master</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    <style>
+        .dashboard-container {
+            margin-top: 20px;
+        }
+        
+        .assessment-card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .assessment-card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .assessment-type {
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .assessment-status {
+            font-weight: bold;
+        }
+        
+        .assessment-status.submitted { color: #f39c12; }
+        .assessment-status.feedback { color: #e74c3c; }
+        .assessment-status.finalised { color: #2ecc71; }
+        
+        .assessment-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .grade-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .grade-pass {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .grade-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .active-assessment {
+            border-left: 5px solid #3498db;
+        }
+        
+        .info-message {
+            padding: 15px;
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body style="visibility: hidden;">
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="images/RIST - Primary Colour.jpg" alt="RIST - Rural Industries Skill Training" class="rist-logo">
+                </div>
+                <div class="title-container">
+                    <h1>AHCBUS408 Budget Master</h1>
+                    <p class="global-subtitle">Agricultural Budgeting Training Tool</p>
+                </div>
+                <div id="user-status" class="user-status">
+                    <!-- Login status will be shown here -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <!-- Navigation items will be inserted here by JavaScript -->
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="loading-indicator" class="spinner">Loading...</div>
+        
+        <div id="dashboard-container" class="dashboard-container" style="display: none;">
+            <h2>Student Dashboard</h2>
+            <p>View your assessment submissions and feedback.</p>
+            
+            <div class="section-header">
+                <h3>Current Assessment</h3>
+            </div>
+            
+            <div id="current-assessment-container">
+                <!-- Current assessment content loaded by JavaScript -->
+            </div>
+            
+            <div class="section-header">
+                <h3>Previous Assessments</h3>
+            </div>
+            
+            <div id="previous-assessments-container">
+                <!-- Previous assessments content loaded by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST" class="rist-logo-footer">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 RIST - Rural Industries Skill Training</p>
+                    <p id="footer-course-name">AHCBUS408 Budget Master</p>
+                </div>
+                <div class="footer-contact">
+                    <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="js/student-dashboard.js"></script>
+    <script type="module" src="js/navigation.js"></script>
+    <script type="module" src="js/site-config.js"></script>
+</body>
+</html>

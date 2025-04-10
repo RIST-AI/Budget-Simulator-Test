@@ -85,8 +85,17 @@ function showErrorMessage(message) {
 // Load assessment content from Firestore
 async function loadAssessmentContent() {
     try {
+        // Get the active assessment ID
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        
+        if (!activeAssessmentDoc.exists()) {
+            throw new Error('No active assessment available');
+        }
+        
+        const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+        
         // Get the assessment content document
-        const contentDoc = await getDoc(doc(db, 'assessmentContent', 'current'));
+        const contentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
         
         if (contentDoc.exists()) {
             assessmentData = contentDoc.data();
@@ -108,27 +117,131 @@ async function loadAssessmentContent() {
                 instructionsElement.innerHTML = assessmentData.instructions || 'Create a budget for the farm, answer the analysis questions, and submit your assessment for review.';
             }
             
-            const budgetInstructionsElement = document.getElementById('budget-instructions');
-            if (budgetInstructionsElement) {
-                budgetInstructionsElement.innerHTML = assessmentData.budgetSetupInstructions || 'Create a budget for the farm by adding income and expense items.';
-            }
-            
-            const analysisInstructionsElement = document.getElementById('analysis-instructions');
-            if (analysisInstructionsElement) {
-                analysisInstructionsElement.innerHTML = assessmentData.analysisInstructions || 'Based on your budget, answer the following questions.';
-            }
-            
             // Assign a random scenario to the user
             assignScenario();
             
             // Populate questions
             populateQuestions();
+            
+            // Load previous budget data if available
+            await loadPreviousBudgetData();
         } else {
             throw new Error('Assessment content not found');
         }
     } catch (error) {
         console.error("Error loading assessment content:", error);
         throw error;
+    }
+}
+
+// Add function to load previous budget data
+async function loadPreviousBudgetData() {
+    try {
+        // Get the user's saved budget data
+        const budgetRef = getStudentBudgetRef(currentUser.uid);
+        const budgetDoc = await getDoc(budgetRef);
+        
+        if (budgetDoc.exists()) {
+            const budgetData = budgetDoc.data();
+            
+            // Update farm type if it exists
+            const farmTypeSelect = document.getElementById('farm-type');
+            if (farmTypeSelect && budgetData.farmType) {
+                farmTypeSelect.value = budgetData.farmType;
+            }
+            
+            // Update budget period if it exists
+            const budgetPeriodSelect = document.getElementById('budget-period');
+            if (budgetPeriodSelect && budgetData.budgetPeriod) {
+                budgetPeriodSelect.value = budgetData.budgetPeriod;
+            }
+            
+            // Populate income items
+            if (budgetData.incomeItems && budgetData.incomeItems.length > 0) {
+                const incomeTable = document.getElementById('income-table');
+                if (incomeTable) {
+                    const incomeTableBody = incomeTable.querySelector('tbody');
+                    if (incomeTableBody) {
+                        incomeTableBody.innerHTML = '';
+                        
+                        budgetData.incomeItems.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><input type="text" value="${item.name}" placeholder="Income item"></td>
+                                <td><input type="number" class="quantity-input" value="${item.quantity || 1}" placeholder="0" min="0"></td>
+                                <td><input type="number" class="price-input" value="${item.price || 0}" placeholder="0.00" min="0" step="0.01"></td>
+                                <td class="row-total">$${((item.quantity || 1) * (item.price || 0)).toFixed(2)}</td>
+                                <td><button class="btn-small btn-remove">Remove</button></td>
+                            `;
+                            incomeTableBody.appendChild(row);
+                            
+                            // Add event listeners to the new row
+                            addEventListenersToRow(row);
+                        });
+                    }
+                }
+            }
+            
+            // Populate expense items
+            if (budgetData.expenseItems && budgetData.expenseItems.length > 0) {
+                const expenseTable = document.getElementById('expense-table');
+                if (expenseTable) {
+                    const expenseTableBody = expenseTable.querySelector('tbody');
+                    if (expenseTableBody) {
+                        expenseTableBody.innerHTML = '';
+                        
+                        budgetData.expenseItems.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><input type="text" value="${item.name}" placeholder="Expense item"></td>
+                                <td><input type="number" class="quantity-input" value="${item.quantity || 1}" placeholder="0" min="0"></td>
+                                <td><input type="number" class="price-input" value="${item.price || 0}" placeholder="0.00" min="0" step="0.01"></td>
+                                <td class="row-total">$${((item.quantity || 1) * (item.price || 0)).toFixed(2)}</td>
+                                <td><button class="btn-small btn-remove">Remove</button></td>
+                            `;
+                            expenseTableBody.appendChild(row);
+                            
+                            // Add event listeners to the new row
+                            addEventListenersToRow(row);
+                        });
+                    }
+                }
+            }
+            
+            // Update budget totals
+            updateBudgetTotals();
+        }
+    } catch (error) {
+        console.error("Error loading previous budget data:", error);
+    }
+}
+
+// Add helper function for row event listeners
+function addEventListenersToRow(row) {
+    // Add event listener to remove button
+    const removeButton = row.querySelector('.btn-remove');
+    if (removeButton) {
+        removeButton.addEventListener('click', function() {
+            const tbody = row.closest('tbody');
+            if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                row.remove();
+                updateBudgetTotals();
+            }
+        });
+    }
+    
+    // Add event listeners for quantity and price inputs
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    
+    if (quantityInput && priceInput) {
+        const updateTotals = function() {
+            calculateRowTotal(row);
+            updateBudgetTotals();
+        };
+        
+        quantityInput.addEventListener('input', updateTotals);
+        priceInput.addEventListener('input', updateTotals);
     }
 }
 
@@ -862,6 +975,29 @@ async function submitAssessment() {
             feedbackHistory: [] // Initialize feedback history array
         };
         
+        // Get the active assessment ID
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        if (!activeAssessmentDoc.exists()) {
+            throw new Error('No active assessment available');
+        }
+        const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+
+        // Update the assessmentData with the assessment ID
+        assessmentData.assessmentId = activeAssessmentId;
+
+        // Save budget data separately for reuse in future assessments
+        await setDoc(getStudentBudgetRef(currentUser.uid), {
+            userId: currentUser.uid,
+            farmType: budget.farmType,
+            budgetPeriod: budget.budgetPeriod,
+            incomeItems: budget.incomeItems,
+            expenseItems: budget.expenseItems,
+            lastUpdated: new Date()
+        });
+
+        // Save to Firestore - use composite key
+        await setDoc(doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`), assessmentData);
+
         // Save to Firestore
         await setDoc(doc(db, 'assessments', currentUser.uid), assessmentData);
         

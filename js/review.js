@@ -11,6 +11,7 @@ requireRole('trainer');
 let currentSubmissionId = null;
 let currentSubmissionStatus = null;
 let currentTab = 'active';
+let assessmentFilter = '';
 
 // DOM elements
 const loadingIndicator = document.getElementById('loading-indicator');
@@ -128,19 +129,31 @@ async function loadSubmissions(status = 'active') {
         let q;
         
         if (status === 'active') {
-            // Active submissions include both submitted and feedback_provided
-            q = query(
-                assessmentsRef,
-                where("submitted", "==", true),
-                where("status", "in", ["submitted", "feedback_provided"])
-            );
+            if (assessmentFilter) {
+                q = query(
+                    submissionsRef,
+                    where("status", "in", ["submitted", "feedback_provided"]),
+                    where("assessmentId", "==", assessmentFilter)
+                );
+            } else {
+                q = query(
+                    submissionsRef,
+                    where("status", "in", ["submitted", "feedback_provided"])
+                );
+            }
         } else {
-            // finalised tab shows finalised submissions
-            q = query(
-                assessmentsRef,
-                where("submitted", "==", true),
-                where("status", "==", "finalised")
-            );
+            if (assessmentFilter) {
+                q = query(
+                    submissionsRef,
+                    where("status", "==", "finalised"),
+                    where("assessmentId", "==", assessmentFilter)
+                );
+            } else {
+                q = query(
+                    submissionsRef,
+                    where("status", "==", "finalised")
+                );
+            }
         }
         
         const snapshot = await getDocs(q);
@@ -947,6 +960,64 @@ function filterSubmissions(container, searchTerm) {
     });
 }
 
+// Setup function for assessment filtering
+function setupAssessmentFilter() {
+    const reviewHeader = document.querySelector('.tab-container');
+    
+    // Create filter element
+    const filterDiv = document.createElement('div');
+    filterDiv.className = 'assessment-filter';
+    filterDiv.style.marginBottom = '20px';
+    filterDiv.innerHTML = `
+        <div class="form-group">
+            <label for="assessment-filter">Filter by Assessment:</label>
+            <select id="assessment-filter" class="form-control">
+                <option value="">All Assessments</option>
+                <!-- Assessment options will be added dynamically -->
+            </select>
+        </div>
+    `;
+    
+    // Insert after tab buttons
+    reviewHeader.appendChild(filterDiv);
+    
+    // Load available assessments
+    loadAssessmentOptions();
+    
+    // Add event listener
+    const filterSelect = document.getElementById('assessment-filter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', (e) => {
+            assessmentFilter = e.target.value;
+            loadSubmissions(currentTab);
+        });
+    }
+}
+
+// Function to load assessment options
+async function loadAssessmentOptions() {
+    try {
+        const filterSelect = document.getElementById('assessment-filter');
+        if (!filterSelect) return;
+        
+        // Get all assessments
+        const assessmentsRef = collection(db, 'assessments');
+        const assessmentsSnapshot = await getDocs(assessmentsRef);
+        
+        // Create options
+        let options = '<option value="">All Assessments</option>';
+        
+        assessmentsSnapshot.forEach(doc => {
+            const assessment = doc.data();
+            options += `<option value="${doc.id}">${assessment.title || 'Untitled Assessment'}</option>`;
+        });
+        
+        filterSelect.innerHTML = options;
+    } catch (error) {
+        console.error("Error loading assessment options:", error);
+    }
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded");
@@ -971,7 +1042,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set up search functionality
         console.log("Setting up search...");
         setupSearch();
-        
+        setupAssessmentFilter();
+
         console.log("Setting up event listeners...");
         
         // Use event delegation for all buttons to avoid null reference errors
