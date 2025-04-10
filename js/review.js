@@ -1092,13 +1092,12 @@ async function loadAssessmentOptions() {
         if (!filterSelect) return;
         
         // Get all assessments
-        const assessmentsRef = collection(db, 'assessments');
-        const assessmentsSnapshot = await getDocs(assessmentsRef);
+        const assessmentsSnapshot = await getDocs(collection(db, 'assessments'));
         
         // Create options
         let options = '<option value="">All Assessments</option>';
         
-        // Get active assessment for highlighting
+        // Get active assessment ID
         let activeAssessmentId = '';
         try {
             const activeDoc = await getDoc(activeAssessmentRef);
@@ -1109,16 +1108,35 @@ async function loadAssessmentOptions() {
             console.error("Error getting active assessment:", error);
         }
         
-        // Process each assessment
-        let assessmentCounter = 0;
+        // Track duplicate titles
+        const titleCounts = {};
+        const assessments = [];
+        
+        // First pass - collect all assessments and count titles
         assessmentsSnapshot.forEach(doc => {
             const assessment = doc.data();
-            assessmentCounter++;
+            assessment.id = doc.id;
+            assessments.push(assessment);
             
-            // Mark active assessment in the dropdown
-            const isActive = doc.id === activeAssessmentId;
-            options += `<option value="${doc.id}" ${isActive ? 'style="font-weight: bold; color: #3498db;"' : ''}>
-                ${assessment.title || `Assessment ${assessmentCounter}`} ${isActive ? '(Active)' : ''}
+            let title = assessment.title || 'Unnamed Assessment';
+            titleCounts[title] = (titleCounts[title] || 0) + 1;
+        });
+        
+        // Second pass - create options with numbered duplicates
+        const titleCounters = {};
+        assessments.forEach(assessment => {
+            let title = assessment.title || 'Unnamed Assessment';
+            
+            // Add counter for duplicates
+            if (titleCounts[title] > 1) {
+                titleCounters[title] = (titleCounters[title] || 0) + 1;
+                title += ` (${titleCounters[title]})`;
+            }
+            
+            // Mark active assessment
+            const isActive = assessment.id === activeAssessmentId;
+            options += `<option value="${assessment.id}" ${isActive ? 'style="font-weight: bold;"' : ''}>
+                ${title} ${isActive ? '(Active)' : ''}
             </option>`;
         });
         

@@ -553,11 +553,92 @@ async function saveAssessment() {
 // Publish assessment
 async function publishAssessment() {
     try {
-        // First save the assessment
-        const assessmentId = await createNewAssessment();
+        // Check if there's already an active assessment
+        let activeAssessmentId = null;
+        let activeAssessmentTitle = null;
         
-        if (!assessmentId) {
-            return; // Error already handled in createNewAssessment
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                activeAssessmentId = activeDoc.data().assessmentId;
+                
+                // Get the title of the active assessment
+                if (activeAssessmentId) {
+                    const activeAssessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
+                    if (activeAssessmentDoc.exists()) {
+                        activeAssessmentTitle = activeAssessmentDoc.data().title;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error checking active assessment:", error);
+        }
+        
+        let assessmentId;
+        const title = document.getElementById('assessment-title').value;
+        
+        // If there's an active assessment, ask if user wants to update it or create new
+        if (activeAssessmentId && activeAssessmentTitle) {
+            const updateExisting = confirm(`Do you want to:\n\nUPDATE the current assessment "${activeAssessmentTitle}"\n\nor\n\nCREATE a new assessment "${title}"\n\nClick OK to update, Cancel to create new.`);
+            
+            if (updateExisting) {
+                // Gather all assessment data
+                const description = document.getElementById('assessment-description').value;
+                const instructions = document.getElementById('assessment-instructions').value;
+                
+                // Collect questions
+                const questions = [];
+                document.querySelectorAll('.question-container').forEach(element => {
+                    const questionId = element.getAttribute('data-question-id');
+                    const questionText = element.querySelector('.question-text').value;
+                    
+                    if (questionText.trim()) { // Only add non-empty questions
+                        questions.push({
+                            id: questionId,
+                            text: questionText
+                        });
+                    }
+                });
+                
+                // Collect scenarios
+                const scenarios = [];
+                document.querySelectorAll('.scenario-container').forEach(element => {
+                    const scenarioId = element.getAttribute('data-scenario-id');
+                    const scenarioTitle = element.querySelector('.scenario-title').value;
+                    const scenarioDescription = element.querySelector('.scenario-description').value;
+                    
+                    if (scenarioTitle.trim() && scenarioDescription.trim()) {
+                        scenarios.push({
+                            id: scenarioId,
+                            title: scenarioTitle,
+                            description: scenarioDescription
+                        });
+                    }
+                });
+                
+                // Update the existing assessment
+                const assessmentRef = doc(db, 'assessments', activeAssessmentId);
+                await updateDoc(assessmentRef, {
+                    title,
+                    description,
+                    instructions,
+                    questions,
+                    scenarios,
+                    updatedAt: serverTimestamp(),
+                    updatedBy: currentUser.uid
+                });
+                
+                assessmentId = activeAssessmentId;
+                showStatusMessage("Active assessment updated successfully!", "success");
+            } else {
+                // Create a new assessment
+                assessmentId = await createNewAssessment();
+                if (!assessmentId) return; // Error already handled
+            }
+        } else {
+            // No active assessment, create new
+            assessmentId = await createNewAssessment();
+            if (!assessmentId) return; // Error already handled
         }
         
         // Ask user if they want to make this the active assessment
