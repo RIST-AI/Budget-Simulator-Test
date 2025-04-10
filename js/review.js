@@ -208,7 +208,7 @@ async function loadSubmissions(status = 'active') {
                 let assessmentTitle = 'Assessment';
                 try {
                     if (submission.assessmentId) {
-                        const assessmentDoc = await getDoc(doc(db, 'assessments', submission.assessmentId));
+                        const assessmentDoc = await getDoc(doc(db, 'submissions', submission.assessmentId));
                         if (assessmentDoc.exists()) {
                             assessmentTitle = assessmentDoc.data().title || 'Assessment';
                         }
@@ -304,7 +304,7 @@ async function loadSubmissions(status = 'active') {
 // View public URL in new tab
 async function viewPublicUrl(submissionId) {
     try {
-        const submissionRef = doc(db, 'assessments', submissionId);
+        const submissionRef = doc(db, 'submissions', submissionId);
         const submissionDoc = await getDoc(submissionRef);
         
         if (!submissionDoc.exists()) {
@@ -344,7 +344,7 @@ async function viewSubmission(submissionId) {
     }
     
     try {
-        const submissionRef = doc(db, 'assessments', submissionId);
+        const submissionRef = doc(db, 'submissions', submissionId);
         const submissionDoc = await getDoc(submissionRef);
         
         if (!submissionDoc.exists()) {
@@ -390,7 +390,7 @@ async function viewSubmission(submissionId) {
         let assessmentTitle = 'Assessment';
         try {
             if (submission.assessmentId) {
-                const assessmentDoc = await getDoc(doc(db, 'assessments', submission.assessmentId));
+                const assessmentDoc = await getDoc(doc(db, 'submissions', submission.assessmentId));
                 if (assessmentDoc.exists()) {
                     assessmentTitle = assessmentDoc.data().title || 'Assessment';
                     
@@ -632,7 +632,7 @@ async function loadComments(submissionId) {
     commentsContainer.innerHTML = '<p>Loading comments...</p>';
     
     try {
-        const commentsRef = collection(db, 'assessments', submissionId, 'comments');
+        const commentsRef = collection(db, 'submissions', submissionId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
         
         const snapshot = await getDocs(q);
@@ -690,7 +690,7 @@ async function deleteSubmission(submissionId) {
         "Are you sure you want to delete this submission? This action can be undone by a database administrator.",
         async () => {
             try {
-                const submissionRef = doc(db, 'assessments', submissionId);
+                const submissionRef = doc(db, 'submissions', submissionId);
                 await updateDoc(submissionRef, {
                     status: 'deleted'
                 });
@@ -743,7 +743,7 @@ async function provideFeedback() {
         };
         
         // Update assessment document
-        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionRef = doc(db, 'submissions', currentSubmissionId);
         await updateDoc(submissionRef, {
             status: 'feedback_provided',
             feedback: commentText, // For backward compatibility
@@ -751,7 +751,7 @@ async function provideFeedback() {
         });
         
         // Add comment to comments collection
-        const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+        const commentsRef = collection(db, 'submissions', currentSubmissionId, 'comments');
         await addDoc(commentsRef, {
             text: commentText,
             trainerId: user.uid,
@@ -833,7 +833,7 @@ async function finaliseAssessment() {
         let studentName = '';
         try {
             if (currentSubmissionId) {
-                const submissionDoc = await getDoc(doc(db, 'assessments', currentSubmissionId));
+                const submissionDoc = await getDoc(doc(db, 'submissions', currentSubmissionId));
                 if (submissionDoc.exists()) {
                     const submission = submissionDoc.data();
                     if (submission.userId) {
@@ -849,7 +849,7 @@ async function finaliseAssessment() {
         }
         
         // Update assessment document
-        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionRef = doc(db, 'submissions', currentSubmissionId);
         await updateDoc(submissionRef, {
             status: 'finalised',
             grade: grade,
@@ -866,7 +866,7 @@ async function finaliseAssessment() {
         
         // Add comment to comments collection if provided
         if (commentText) {
-            const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+            const commentsRef = collection(db, 'submissions', currentSubmissionId, 'comments');
             await addDoc(commentsRef, {
                 text: commentText + `\n\nGrade: ${grade}`,
                 trainerId: user.uid,
@@ -877,7 +877,7 @@ async function finaliseAssessment() {
             });
         } else {
             // If no comment was provided, still add a system comment with the grade info
-            const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+            const commentsRef = collection(db, 'submissions', currentSubmissionId, 'comments');
             await addDoc(commentsRef, {
                 text: `Assessment has been graded.\n\nGrade: ${grade}`,
                 trainerId: user.uid,
@@ -938,7 +938,7 @@ async function copyPublicUrl() {
     if (!currentSubmissionId) return;
     
     try {
-        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionRef = doc(db, 'submissions', currentSubmissionId);
         const submissionDoc = await getDoc(submissionRef);
         
         if (!submissionDoc.exists()) {
@@ -991,7 +991,7 @@ async function reopenSubmission(submissionId) {
                 };
                 
                 // Update assessment document
-                const submissionRef = doc(db, 'assessments', submissionId);
+                const submissionRef = doc(db, 'submissions', submissionId);
                 await updateDoc(submissionRef, {
                     status: 'feedback_provided',
                     feedbackHistory: arrayUnion(feedbackEntry)
@@ -1092,7 +1092,7 @@ async function loadAssessmentOptions() {
         if (!filterSelect) return;
         
         // Get all assessments
-        const assessmentsSnapshot = await getDocs(collection(db, 'assessments'));
+        const assessmentsSnapshot = await getDocs(collection(db, 'submissions'));
         
         // Create options
         let options = '<option value="">All Assessments</option>';

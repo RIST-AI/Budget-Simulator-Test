@@ -51,7 +51,7 @@ async function loadActiveAssessment() {
         const activeAssessmentId = activeDoc.data().assessmentId;
         
         // Get assessment details
-        const assessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
+        const assessmentDoc = await getDoc(doc(db, 'submissions', submissionId));
         if (!assessmentDoc.exists()) {
             container.innerHTML = '<div class="info-message">Error loading active assessment.</div>';
             return;

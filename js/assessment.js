@@ -1,5 +1,5 @@
 // Import Firebase modules
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc, activeAssessmentRef } from './firebase-config.js';
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc, activeAssessmentRef, getStudentBudgetRef } from './firebase-config.js';
 import { requireStudent, updateNavigation } from './auth.js';
 
 // Global variables
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadAssessmentContent();
         
         // Check if user already has an assessment in progress
-        await checkExistingAssessment();
+        await checkExistingSubmission();
         
         // Set up event listeners
         setupEventListeners();
@@ -160,7 +160,8 @@ async function loadAssessmentContent() {
 }
 
 // Display assessment content
-function displayAssessment(assessmentData) {
+function displayAssessment(data) {
+    assessmentData = data;
     // Hide loading indicator
     const loadingIndicator = document.getElementById('loading-indicator');
     if (loadingIndicator) {
@@ -451,30 +452,37 @@ function populateQuestions() {
 }
 
 // Check if user already has an assessment in progress
-// Modify checkExistingAssessment in assessment.js
+// Modify checkExistingSubmission in assessment.js
 
-async function checkExistingAssessment() {
+async function checkExistingSubmission() {
     try {
-        // Get user's assessment document
-        const assessmentDoc = await getDoc(doc(db, 'assessments', currentUser.uid));
+        // Get active assessment ID first
+        const activeDoc = await getDoc(activeAssessmentRef);
+        if (!activeDoc.exists()) return;
         
-        if (assessmentDoc.exists()) {
-            const existingAssessment = assessmentDoc.data();
+        const activeAssessmentId = activeDoc.data().assessmentId;
+        
+        // Check for existing submission with compound key
+        const submissionRef = doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`);
+        const submissionDoc = await getDoc(submissionRef);
+        
+        if (submissionDoc.exists()) {
+            const existingSubmission = submissionDoc.data();
             
             // Check assessment status
-            const status = existingAssessment.status || 
-                           (existingAssessment.submitted ? 'submitted' : 'saved');
+            const status = existingSubmission.status || 
+                           (existingSubmission.submitted ? 'submitted' : 'saved');
             
             // Handle different statuses
             switch(status) {
                 case 'saved':
                     // Populate the form with saved data
-                    populateExistingBudget(existingAssessment.budget);
-                    populateExistingAnswers(existingAssessment.answers);
+                    populateExistingBudget(existingSubmission.budget);
+                    populateExistingAnswers(existingSubmission.answers);
                     
                     // Set scenario
-                    if (existingAssessment.scenario) {
-                        userScenario = existingAssessment.scenario;
+                    if (existingSubmission.scenario) {
+                        userScenario = existingSubmission.scenario;
                         const scenarioElement = document.getElementById('scenario-text');
                         if (scenarioElement) {
                             scenarioElement.innerHTML = userScenario.description;
@@ -484,12 +492,12 @@ async function checkExistingAssessment() {
                     
                 case 'feedback_provided':
                     // Populate the form with previous submission
-                    populateExistingBudget(existingAssessment.budget);
-                    populateExistingAnswers(existingAssessment.answers);
+                    populateExistingBudget(existingSubmission.budget);
+                    populateExistingAnswers(existingSubmission.answers);
                     
                     // Set scenario
-                    if (existingAssessment.scenario) {
-                        userScenario = existingAssessment.scenario;
+                    if (existingSubmission.scenario) {
+                        userScenario = existingSubmission.scenario;
                         const scenarioElement = document.getElementById('scenario-text');
                         if (scenarioElement) {
                             scenarioElement.innerHTML = userScenario.description;
@@ -497,13 +505,13 @@ async function checkExistingAssessment() {
                     }
                     
                     // Show feedback message
-                    showFeedbackMessage(existingAssessment);
+                    showFeedbackMessage(existingSubmission);
                     break;
                     
                 case 'submitted':
                 case 'finalised':
                     // Show message that assessment is already submitted
-                    showSubmittedMessage(status, existingAssessment);
+                    showSubmittedMessage(status, existingSubmission);
                     return; // Exit function to prevent form population
             }
         }
@@ -1123,6 +1131,13 @@ async function saveAssessment() {
         saveButton.disabled = true;
         saveButton.textContent = 'Saving...';
         
+        // Get the active assessment ID first
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        if (!activeAssessmentDoc.exists()) {
+            throw new Error('No active assessment available');
+        }
+        const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+        
         // Collect budget data
         const budget = collectBudgetData();
         
@@ -1137,12 +1152,13 @@ async function saveAssessment() {
             budget: budget,
             answers: answers,
             lastSaved: new Date(),
-            status: 'saved', // Set status to 'saved'
-            submitted: false
+            status: 'saved',
+            submitted: false,
+            assessmentId: activeAssessmentId
         };
         
-        // Save to Firestore
-        await setDoc(doc(db, 'assessments', currentUser.uid), assessmentData);
+        // Save to submissions collection with compound key
+        await setDoc(doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`), assessmentData);
         
         // Show success message
         alert('Assessment saved successfully!');
@@ -1224,9 +1240,6 @@ async function submitAssessment() {
 
         // Save to Firestore - use composite key
         await setDoc(doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`), assessmentData);
-
-        // Save to Firestore
-        await setDoc(doc(db, 'assessments', currentUser.uid), assessmentData);
         
         // Show success message
         const assessmentContent = document.getElementById('assessment-content');

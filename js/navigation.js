@@ -8,6 +8,7 @@ const navItems = {
     { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' }
   ],
   student: [
+    { id: 'dashboard-nav-item', text: 'Dashboard', href: 'student-dashboard.html' },
     { id: 'assessment-nav-item', text: 'Assessment', href: 'assessment.html' }
   ],
   trainer: [
@@ -26,7 +27,15 @@ async function checkAssessmentNotifications() {
   
   try {
     // Check if the user has an assessment with feedback or grade
-    const assessmentRef = doc(db, 'assessments', user.uid);
+    const q = query(
+      collection(db, 'submissions'),
+      where("userId", "==", user.uid),
+      where("status", "in", ["feedback_provided", "finalised"])
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      // Show notification
+    }
     const assessmentDoc = await getDoc(assessmentRef);
     
     if (assessmentDoc.exists()) {
