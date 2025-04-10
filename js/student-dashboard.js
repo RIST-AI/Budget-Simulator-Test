@@ -37,8 +37,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Load the currently active assessment
 async function loadActiveAssessment() {
-    console.log("Active assessment ID:", activeAssessmentId);
-    console.log("Current user ID:", currentUser.uid);
     const container = document.getElementById('current-assessment-container');
     if (!container) return;
     
@@ -51,7 +49,8 @@ async function loadActiveAssessment() {
         }
         
         const activeAssessmentId = activeDoc.data().assessmentId;
-        
+        console.log("Active assessment ID:", activeAssessmentId);
+        console.log("Current user ID:", currentUser.uid);
         // Get assessment details
         const assessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
         if (!assessmentDoc.exists()) {
