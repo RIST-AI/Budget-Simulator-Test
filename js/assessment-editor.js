@@ -152,7 +152,96 @@ function setupEventListeners() {
 // Load existing assessment data
 async function loadAssessment() {
     try {
-        // Check if there's an existing assessment
+        // First check if there's an active assessment to load
+        let activeAssessmentId = null;
+        
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                activeAssessmentId = activeDoc.data().assessmentId;
+            }
+        } catch (error) {
+            console.error("Error checking active assessment:", error);
+        }
+        
+        // If there's an active assessment, load that instead of the template
+        if (activeAssessmentId) {
+            const assessmentRef = doc(db, 'assessments', activeAssessmentId);
+            const assessmentDoc = await getDoc(assessmentRef);
+            
+            if (assessmentDoc.exists()) {
+                assessmentData = assessmentDoc.data();
+                
+                // Populate the form with existing data
+                document.getElementById('assessment-title').value = assessmentData.title || '';
+                document.getElementById('assessment-description').value = assessmentData.description || '';
+                document.getElementById('assessment-instructions').value = assessmentData.instructions || '';
+                
+                // Load questions
+                if (assessmentData.questions && assessmentData.questions.length > 0) {
+                    const questionsContainer = document.getElementById('questions-container');
+                    if (questionsContainer) {
+                        questionsContainer.innerHTML = ''; // Clear existing questions
+                        
+                        assessmentData.questions.forEach((question, index) => {
+                            const questionId = index + 1;
+                            
+                            // Create a temporary container
+                            const tempContainer = document.createElement('div');
+                            tempContainer.innerHTML = createQuestionHTML(questionId, question.text);
+                            
+                            // Get the question element and append it
+                            const questionElement = tempContainer.firstElementChild;
+                            questionsContainer.appendChild(questionElement);
+                            
+                            // Add event listeners
+                            const removeButton = questionElement.querySelector('.btn-remove');
+                            if (removeButton) {
+                                removeButton.addEventListener('click', function() {
+                                    questionElement.remove();
+                                });
+                            }
+                        });
+                        
+                        currentQuestionId = assessmentData.questions.length + 1;
+                    }
+                }
+                
+                // Load scenarios
+                if (assessmentData.scenarios && assessmentData.scenarios.length > 0) {
+                    const scenariosContainer = document.getElementById('scenarios-container');
+                    if (scenariosContainer) {
+                        scenariosContainer.innerHTML = ''; // Clear existing scenarios
+                        
+                        assessmentData.scenarios.forEach((scenario, index) => {
+                            // Create a temporary container
+                            const tempContainer = document.createElement('div');
+                            tempContainer.innerHTML = createScenarioHTML(index + 1, scenario.title, scenario.description);
+                            
+                            // Get the scenario element and append it
+                            const scenarioElement = tempContainer.firstElementChild;
+                            scenariosContainer.appendChild(scenarioElement);
+                            
+                            // Add event listeners
+                            const removeButton = scenarioElement.querySelector('.btn-remove');
+                            if (removeButton) {
+                                removeButton.addEventListener('click', function() {
+                                    scenarioElement.remove();
+                                });
+                            }
+                        });
+                    }
+                }
+                
+                showStatusMessage('Active assessment loaded successfully.', 'success');
+                return; // Exit the function after loading active assessment
+            } else {
+                console.warn(`Active assessment ID ${activeAssessmentId} exists but document not found. Falling back to template.`);
+            }
+        }
+        
+        // If no active assessment or it failed to load, fall back to the template
+        // This is the original part of your function
         const assessmentRef = doc(db, 'assessmentTemplate', 'current');
         const assessmentDoc = await getDoc(assessmentRef);
         
@@ -221,7 +310,7 @@ async function loadAssessment() {
             }
             
             // Show success message
-            showStatusMessage('Assessment loaded successfully.', 'success');
+            showStatusMessage('Assessment template loaded successfully.', 'success');
         } else {
             // No existing assessment, create a new one with example content
             assessmentData = {
