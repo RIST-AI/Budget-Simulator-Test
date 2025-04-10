@@ -1,6 +1,6 @@
 // js/assessment-editor.js
 
-import { auth, db, collection, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, serverTimestamp } from './firebase-config.js';
+import { auth, db, collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, updateDoc, serverTimestamp } from './firebase-config.js';
 import { requireRole, getCurrentUser } from './auth.js';
 
 // Global variables
