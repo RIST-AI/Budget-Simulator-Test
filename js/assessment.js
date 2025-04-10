@@ -82,55 +82,65 @@ function showErrorMessage(message) {
     }
 }
 
-// Load assessment content from Firestore
+// Load assessment content
 async function loadAssessmentContent() {
     try {
-        // Get the active assessment ID
-        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        // Try to get the active assessment ID
+        let activeAssessmentId = null;
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                activeAssessmentId = activeDoc.data().assessmentId;
+            } else {
+                document.getElementById('assessment-container').innerHTML = `
+                    <div class="alert alert-warning">
+                        No active assessment is currently available.
+                        Please contact your instructor for more information.
+                    </div>
+                `;
+                return;
+            }
+        } catch (error) {
+            console.error("Error getting active assessment:", error);
+            document.getElementById('assessment-container').innerHTML = `
+                <div class="alert alert-danger">
+                    <h4>Error Loading Assessment</h4>
+                    <p>Could not load the active assessment.</p>
+                    <p>Error details: ${error.message}</p>
+                    <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+                </div>
+            `;
+            return;
+        }
+
+        // Try to get the assessment content
+        const assessmentRef = doc(db, 'assessments', activeAssessmentId);
+        const assessmentDoc = await getDoc(assessmentRef);
         
-        if (!activeAssessmentDoc.exists()) {
-            throw new Error('No active assessment available');
+        if (!assessmentDoc.exists()) {
+            document.getElementById('assessment-container').innerHTML = `
+                <div class="alert alert-warning">
+                    The active assessment (ID: ${activeAssessmentId}) could not be found.
+                    Please contact your instructor.
+                </div>
+            `;
+            return;
         }
         
-        const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+        // We have the assessment data, proceed with display
+        const assessmentData = assessmentDoc.data();
+        displayAssessment(assessmentData);
         
-        // Get the assessment content document
-        const contentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
-        
-        if (contentDoc.exists()) {
-            assessmentData = contentDoc.data();
-            
-            // Populate assessment title and description
-            const titleElement = document.getElementById('assessment-title');
-            if (titleElement) {
-                titleElement.textContent = assessmentData.title || 'Farm Budget Assessment';
-            }
-            
-            const descElement = document.getElementById('assessment-description');
-            if (descElement) {
-                descElement.innerHTML = assessmentData.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
-            }
-            
-            // Populate instructions
-            const instructionsElement = document.getElementById('instructions-text');
-            if (instructionsElement) {
-                instructionsElement.innerHTML = assessmentData.instructions || 'Create a budget for the farm, answer the analysis questions, and submit your assessment for review.';
-            }
-            
-            // Assign a random scenario to the user
-            assignScenario();
-            
-            // Populate questions
-            populateQuestions();
-            
-            // Load previous budget data if available
-            await loadPreviousBudgetData();
-        } else {
-            throw new Error('Assessment content not found');
-        }
     } catch (error) {
         console.error("Error loading assessment content:", error);
-        throw error;
+        document.getElementById('assessment-container').innerHTML = `
+            <div class="alert alert-danger">
+                <h4>Error Loading Assessment</h4>
+                <p>Failed to load the assessment content.</p>
+                <p>Error details: ${error.message}</p>
+                <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+            </div>
+        `;
     }
 }
 
