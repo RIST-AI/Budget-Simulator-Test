@@ -553,6 +553,9 @@ async function saveAssessment() {
 // Publish assessment
 async function publishAssessment() {
     try {
+        // Get the current assessment title
+        const currentTitle = document.getElementById('assessment-title').value || "Untitled Assessment";
+        
         // Check if there's already an active assessment
         let activeAssessmentId = null;
         let activeAssessmentTitle = null;
@@ -561,8 +564,6 @@ async function publishAssessment() {
             const activeDoc = await getDoc(activeAssessmentRef);
             if (activeDoc.exists()) {
                 activeAssessmentId = activeDoc.data().assessmentId;
-                
-                // Get the title of the active assessment
                 if (activeAssessmentId) {
                     const activeAssessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
                     if (activeAssessmentDoc.exists()) {
@@ -573,101 +574,104 @@ async function publishAssessment() {
         } catch (error) {
             console.error("Error checking active assessment:", error);
         }
-        
-        const currentTitle = document.getElementById('assessment-title').value || "Untitled Assessment";
-        
-        // Create custom dialog
-        const dialogOverlay = document.createElement('div');
-        dialogOverlay.style.position = 'fixed';
-        dialogOverlay.style.top = '0';
-        dialogOverlay.style.left = '0';
-        dialogOverlay.style.width = '100%';
-        dialogOverlay.style.height = '100%';
-        dialogOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        dialogOverlay.style.display = 'flex';
-        dialogOverlay.style.justifyContent = 'center';
-        dialogOverlay.style.alignItems = 'center';
-        dialogOverlay.style.zIndex = '9999';
-        
-        const dialog = document.createElement('div');
-        dialog.style.backgroundColor = 'white';
-        dialog.style.padding = '20px';
-        dialog.style.borderRadius = '5px';
-        dialog.style.maxWidth = '500px';
-        dialog.style.width = '90%';
-        dialog.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
-        
-        const title = document.createElement('h3');
-        title.textContent = 'Publish Assessment';
-        title.style.marginTop = '0';
-        
-        const message = document.createElement('p');
-        if (activeAssessmentId) {
-            message.textContent = `You are about to publish "${currentTitle}". You can update the current assessment "${activeAssessmentTitle}" or publish this as a new assessment.`;
+
+        // Prepare message text
+        let messageText = activeAssessmentId ? 
+            `You are about to publish "${currentTitle}". Would you like to update the current active assessment "${activeAssessmentTitle}" or publish this as a completely new assessment?` :
+            `You are about to publish "${currentTitle}" as a new assessment.`;
+
+        // Show appropriate buttons based on whether there's an active assessment
+        if (activeAssessmentId && activeAssessmentTitle) {
+            // Use built-in confirm for simplicity
+            if (window.confirm(`${messageText}\n\nClick OK to update the current assessment, or CANCEL to publish as new.`)) {
+                // Update existing assessment
+                try {
+                    // First check if the document exists
+                    const assessmentDocRef = doc(db, 'assessments', activeAssessmentId);
+                    const assessmentDoc = await getDoc(assessmentDocRef);
+                    
+                    if (!assessmentDoc.exists()) {
+                        showStatusMessage(`Cannot update: assessment ${activeAssessmentId} doesn't exist`, "error");
+                        return;
+                    }
+                    
+                    // Gather all assessment data
+                    const title = document.getElementById('assessment-title').value;
+                    const description = document.getElementById('assessment-description').value;
+                    const instructions = document.getElementById('assessment-instructions').value;
+                    
+                    // Collect questions
+                    const questions = [];
+                    document.querySelectorAll('.question-container').forEach(element => {
+                        const questionId = element.getAttribute('data-question-id');
+                        const questionText = element.querySelector('.question-text').value;
+                        
+                        if (questionText.trim()) {
+                            questions.push({
+                                id: questionId,
+                                text: questionText
+                            });
+                        }
+                    });
+                    
+                    // Collect scenarios
+                    const scenarios = [];
+                    document.querySelectorAll('.scenario-container').forEach(element => {
+                        const scenarioId = element.getAttribute('data-scenario-id');
+                        const scenarioTitle = element.querySelector('.scenario-title').value;
+                        const scenarioDescription = element.querySelector('.scenario-description').value;
+                        
+                        if (scenarioTitle.trim() && scenarioDescription.trim()) {
+                            scenarios.push({
+                                id: scenarioId,
+                                title: scenarioTitle,
+                                description: scenarioDescription
+                            });
+                        }
+                    });
+                    
+                    // Update the assessment document
+                    await updateDoc(assessmentDocRef, {
+                        title,
+                        description,
+                        instructions,
+                        questions,
+                        scenarios,
+                        updatedAt: serverTimestamp(),
+                        updatedBy: currentUser.uid
+                    });
+                    
+                    showStatusMessage("Assessment updated successfully!", "success");
+                } catch (error) {
+                    console.error("Error updating assessment:", error);
+                    showStatusMessage(`Error updating assessment: ${error.message}`, "error");
+                }
+            } else {
+                // Publish as new assessment
+                publishAsNew();
+            }
         } else {
-            message.textContent = `You are about to publish "${currentTitle}" as a new assessment.`;
+            // No active assessment, just publish as new
+            publishAsNew();
         }
         
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.display = 'flex';
-        buttonContainer.style.justifyContent = 'flex-end';
-        buttonContainer.style.gap = '10px';
-        buttonContainer.style.marginTop = '20px';
-        
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'btn btn-secondary';
-        cancelBtn.onclick = () => document.body.removeChild(dialogOverlay);
-        
-        const createNewBtn = document.createElement('button');
-        createNewBtn.textContent = 'Publish New Assessment';
-        createNewBtn.className = 'btn btn-primary';
-        createNewBtn.onclick = async () => {
-            document.body.removeChild(dialogOverlay);
-            
-            // Create new assessment
+        // Helper function to publish new assessment
+        async function publishAsNew() {
             const assessmentId = await createNewAssessment();
             if (!assessmentId) return; // Error already handled
             
-            // Always make the new assessment active
+            // Always make new assessment active
             await setDoc(activeAssessmentRef, {
                 assessmentId: assessmentId,
                 activatedAt: serverTimestamp(),
                 activatedBy: currentUser.uid
             });
             
-            showStatusMessage("New assessment published and activated!", "success");
-        };
-        
-        buttonContainer.appendChild(cancelBtn);
-        
-        // Only show update button if there's an active assessment
-        if (activeAssessmentId) {
-            const updateBtn = document.createElement('button');
-            updateBtn.textContent = 'Update Current Assessment';
-            updateBtn.className = 'btn';
-            updateBtn.style.backgroundColor = '#4CAF50';
-            updateBtn.style.color = 'white';
-            updateBtn.onclick = async () => {
-                document.body.removeChild(dialogOverlay);
-                await updateExistingAssessment(activeAssessmentId);
-                showStatusMessage("Active assessment updated successfully!", "success");
-            };
-            buttonContainer.appendChild(updateBtn);
+            showStatusMessage("New assessment published and activated for students!", "success");
         }
-        
-        buttonContainer.appendChild(createNewBtn);
-        
-        dialog.appendChild(title);
-        dialog.appendChild(message);
-        dialog.appendChild(buttonContainer);
-        dialogOverlay.appendChild(dialog);
-        
-        document.body.appendChild(dialogOverlay);
-        
     } catch (error) {
-        console.error("Error publishing assessment:", error);
-        showStatusMessage('Error publishing assessment: ' + error.message, 'error');
+        console.error("Error in assessment publishing process:", error);
+        showStatusMessage(`Error: ${error.message}`, "error");
     }
 }
 
