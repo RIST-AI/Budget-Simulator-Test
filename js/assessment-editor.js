@@ -111,20 +111,6 @@ function setupEventListeners() {
     if (saveSiteSettingsButton) {
         saveSiteSettingsButton.addEventListener('click', saveSiteSettings);
     }
-
-    // Manage assessments
-    const refreshAssessmentsButton = document.getElementById('refresh-assessments');
-    if (refreshAssessmentsButton) {
-        refreshAssessmentsButton.addEventListener('click', loadExistingAssessments);
-    }
-
-    // Initial load of existing assessments when switching to that tab
-    document.querySelectorAll('.tab-button').forEach(button => {
-        if (button.getAttribute('data-tab') === 'manage-tab') {
-            button.addEventListener('click', loadExistingAssessments);
-        }
-    });
-
     
     // Live preview for site settings
     const courseNameInput = document.getElementById('course-name');
@@ -592,89 +578,6 @@ async function publishAssessment() {
     }
 }
 
-// Function to load existing assessments
-async function loadExistingAssessments() {
-    const assessmentsContainer = document.getElementById('assessments-list');
-    if (!assessmentsContainer) return;
-    
-    assessmentsContainer.innerHTML = '<p>Loading assessments...</p>';
-    
-    try {
-        // Get all assessments
-        const assessmentsSnapshot = await getDocs(collection(db, 'assessments'));
-        
-        if (assessmentsSnapshot.empty) {
-            assessmentsContainer.innerHTML = '<p>No assessments found.</p>';
-            return;
-        }
-        
-        // Get active assessment ID
-        let activeId = null;
-        try {
-            const activeDoc = await getDoc(activeAssessmentRef);
-            if (activeDoc.exists()) {
-                activeId = activeDoc.data().assessmentId;
-            }
-        } catch (error) {
-            console.error("Error getting active assessment:", error);
-        }
-        
-        // Build HTML for assessments
-        let html = '<div class="assessments-grid">';
-        
-        assessmentsSnapshot.forEach(doc => {
-            const assessment = doc.data();
-            const isActive = doc.id === activeId;
-            
-            html += `
-                <div class="assessment-card ${isActive ? 'active-assessment' : ''}">
-                    <div class="assessment-card-header">
-                        <div class="assessment-type">${assessment.title || 'Unnamed Assessment'}</div>
-                        <div class="assessment-status">${isActive ? 'ACTIVE' : 'Inactive'}</div>
-                    </div>
-                    <p>${assessment.description || 'No description'}</p>
-                    <p><strong>Questions:</strong> ${assessment.questions?.length || 0}</p>
-                    <p><strong>Scenarios:</strong> ${assessment.scenarios?.length || 0}</p>
-                    <div class="assessment-actions">
-                        ${!isActive ? 
-                            `<button class="btn" onclick="activateAssessment('${doc.id}')">Activate</button>` : 
-                            `<button class="btn" disabled>Currently Active</button>`}
-                    </div>
-                </div>
-            `;
-        });
-        
-        html += '</div>';
-        assessmentsContainer.innerHTML = html;
-    } catch (error) {
-        console.error("Error loading assessments:", error);
-        assessmentsContainer.innerHTML = `<p class="error-message">Error loading assessments: ${error.message}</p>`;
-    }
-}
-
-// Function to activate an assessment
-async function activateAssessment(assessmentId) {
-    try {
-        if (!confirm("Are you sure you want to activate this assessment? This will make it visible to all students.")) {
-            return;
-        }
-        
-        await setDoc(activeAssessmentRef, {
-            assessmentId: assessmentId,
-            activatedAt: serverTimestamp(),
-            activatedBy: currentUser.uid
-        });
-        
-        showStatusMessage("Assessment activated successfully!", "success");
-        
-        // Reload the assessment list
-        await loadExistingAssessments();
-    } catch (error) {
-        console.error("Error activating assessment:", error);
-        showStatusMessage("Error activating assessment: " + error.message, "error");
-    }
-}
-
 // Preview assessment
 function previewAssessment() {
     try {
@@ -878,5 +781,3 @@ function showStatusMessage(message, type = 'success') {
         }, 5000);
     }
 }
-
-window.activateAssessment = activateAssessment;
