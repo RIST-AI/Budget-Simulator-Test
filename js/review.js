@@ -1,4 +1,4 @@
-import { auth, db, collection, query, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
+import { auth, db, collection, query, submissionsRef, activeAssessmentRef, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
 import { requireRole, initAuth, getCurrentUser } from './auth.js';
 
 // Initialize authentication
@@ -6,6 +6,8 @@ initAuth();
 
 // Ensure user is authenticated and has trainer role
 requireRole('trainer');
+
+const submissionsRef = collection(db, 'submissions');
 
 // Global variables
 let currentSubmissionId = null;
@@ -106,7 +108,6 @@ window.onclick = (event) => {
 };
 
 // Load submissions based on status
-// Load submissions based on status
 async function loadSubmissions(status = 'active') {
     if (loadingIndicator) {
         loadingIndicator.style.display = 'block';
@@ -125,9 +126,10 @@ async function loadSubmissions(status = 'active') {
     
     try {
         // Create a query to get submissions with the specified status
-        const assessmentsRef = collection(db, 'assessments');
+        // Make sure we're using the correct collection
         let q;
         
+        // Dynamic query based on status and filter
         if (status === 'active') {
             if (assessmentFilter) {
                 q = query(
