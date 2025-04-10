@@ -668,6 +668,7 @@ function populateExistingAnswers(answers) {
 function setupEventListeners() {
     // Add income item
     const addIncomeButton = document.getElementById('add-income');
+
     if (addIncomeButton) {
         addIncomeButton.addEventListener('click', function() {
             const incomeTable = document.getElementById('income-table');
@@ -818,7 +819,78 @@ function setupEventListeners() {
         submitButton.addEventListener('click', submitAssessment);
     }
     
+    const resetBudgetButton = document.getElementById('reset-budget');
+
+    if (resetBudgetButton) {
+        resetBudgetButton.addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset your budget? All current entries will be cleared.')) {
+                resetBudget();
+            }
+        });
+}
     // Update budget totals initially
+    updateBudgetTotals();
+}
+
+function resetBudget() {
+    // Reset farm type and budget period to defaults
+    const farmTypeSelect = document.getElementById('farm-type');
+    if (farmTypeSelect) {
+        farmTypeSelect.value = 'mixed';
+    }
+    
+    const budgetPeriodSelect = document.getElementById('budget-period');
+    if (budgetPeriodSelect) {
+        budgetPeriodSelect.value = 'annual';
+    }
+    
+    // Reset income table
+    const incomeTable = document.getElementById('income-table');
+    if (incomeTable) {
+        const incomeTableBody = incomeTable.querySelector('tbody');
+        if (incomeTableBody) {
+            incomeTableBody.innerHTML = `
+                <tr>
+                    <td><input type="text" placeholder="Income item"></td>
+                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                    <td class="row-total">$0.00</td>
+                    <td><button class="btn-small btn-remove">Remove</button></td>
+                </tr>
+            `;
+            
+            // Add event listeners to the row
+            const row = incomeTableBody.querySelector('tr');
+            if (row) {
+                addEventListenersToRow(row);
+            }
+        }
+    }
+    
+    // Reset expense table
+    const expenseTable = document.getElementById('expense-table');
+    if (expenseTable) {
+        const expenseTableBody = expenseTable.querySelector('tbody');
+        if (expenseTableBody) {
+            expenseTableBody.innerHTML = `
+                <tr>
+                    <td><input type="text" placeholder="Expense item"></td>
+                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                    <td class="row-total">$0.00</td>
+                    <td><button class="btn-small btn-remove">Remove</button></td>
+                </tr>
+            `;
+            
+            // Add event listeners to the row
+            const row = expenseTableBody.querySelector('tr');
+            if (row) {
+                addEventListenersToRow(row);
+            }
+        }
+    }
+    
+    // Update totals
     updateBudgetTotals();
 }
 
