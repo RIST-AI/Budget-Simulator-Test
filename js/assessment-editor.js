@@ -576,39 +576,94 @@ async function publishAssessment() {
         
         const currentTitle = document.getElementById('assessment-title').value || "Untitled Assessment";
         
-        // If there's an active assessment, ask whether to update or create new
-        if (activeAssessmentId && activeAssessmentTitle) {
-            const updateExisting = confirm(`Do you want to:\n\nUPDATE the current active assessment "${activeAssessmentTitle}"\n\nor\n\nPUBLISH "${currentTitle}" as a NEW assessment?\n\nClick OK to update current, Cancel to publish new.`);
-            
-            if (updateExisting) {
-                // Update existing assessment logic
-                await updateExistingAssessment(activeAssessmentId);
-                showStatusMessage("Active assessment updated successfully!", "success");
-                return;
-            }
-            // If they choose not to update, fall through to create new assessment
+        // Create custom dialog
+        const dialogOverlay = document.createElement('div');
+        dialogOverlay.style.position = 'fixed';
+        dialogOverlay.style.top = '0';
+        dialogOverlay.style.left = '0';
+        dialogOverlay.style.width = '100%';
+        dialogOverlay.style.height = '100%';
+        dialogOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        dialogOverlay.style.display = 'flex';
+        dialogOverlay.style.justifyContent = 'center';
+        dialogOverlay.style.alignItems = 'center';
+        dialogOverlay.style.zIndex = '9999';
+        
+        const dialog = document.createElement('div');
+        dialog.style.backgroundColor = 'white';
+        dialog.style.padding = '20px';
+        dialog.style.borderRadius = '5px';
+        dialog.style.maxWidth = '500px';
+        dialog.style.width = '90%';
+        dialog.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+        
+        const title = document.createElement('h3');
+        title.textContent = 'Publish Assessment';
+        title.style.marginTop = '0';
+        
+        const message = document.createElement('p');
+        if (activeAssessmentId) {
+            message.textContent = `You are about to publish "${currentTitle}". You can update the current assessment "${activeAssessmentTitle}" or publish this as a new assessment.`;
+        } else {
+            message.textContent = `You are about to publish "${currentTitle}" as a new assessment.`;
         }
         
-        // Create new assessment
-        const assessmentId = await createNewAssessment();
-        if (!assessmentId) return; // Error already handled
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'flex-end';
+        buttonContainer.style.gap = '10px';
+        buttonContainer.style.marginTop = '20px';
         
-        // For a new assessment, ask if it should replace the current active assessment
-        let activateMessage = activeAssessmentId ? 
-            `Do you want to make "${currentTitle}" the ACTIVE assessment for students?\n\n(This will replace "${activeAssessmentTitle}" as the active assessment.)` :
-            `Do you want to make "${currentTitle}" the ACTIVE assessment for students?`;
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.onclick = () => document.body.removeChild(dialogOverlay);
+        
+        const createNewBtn = document.createElement('button');
+        createNewBtn.textContent = 'Publish New Assessment';
+        createNewBtn.className = 'btn btn-primary';
+        createNewBtn.onclick = async () => {
+            document.body.removeChild(dialogOverlay);
             
-        const makeActive = confirm(activateMessage);
-        if (makeActive) {
+            // Create new assessment
+            const assessmentId = await createNewAssessment();
+            if (!assessmentId) return; // Error already handled
+            
+            // Always make the new assessment active
             await setDoc(activeAssessmentRef, {
                 assessmentId: assessmentId,
                 activatedAt: serverTimestamp(),
                 activatedBy: currentUser.uid
             });
-            showStatusMessage("New assessment published and set as active!", "success");
-        } else {
-            showStatusMessage("New assessment published successfully (not set as active).", "success");
+            
+            showStatusMessage("New assessment published and activated!", "success");
+        };
+        
+        buttonContainer.appendChild(cancelBtn);
+        
+        // Only show update button if there's an active assessment
+        if (activeAssessmentId) {
+            const updateBtn = document.createElement('button');
+            updateBtn.textContent = 'Update Current Assessment';
+            updateBtn.className = 'btn';
+            updateBtn.style.backgroundColor = '#4CAF50';
+            updateBtn.style.color = 'white';
+            updateBtn.onclick = async () => {
+                document.body.removeChild(dialogOverlay);
+                await updateExistingAssessment(activeAssessmentId);
+                showStatusMessage("Active assessment updated successfully!", "success");
+            };
+            buttonContainer.appendChild(updateBtn);
         }
+        
+        buttonContainer.appendChild(createNewBtn);
+        
+        dialog.appendChild(title);
+        dialog.appendChild(message);
+        dialog.appendChild(buttonContainer);
+        dialogOverlay.appendChild(dialog);
+        
+        document.body.appendChild(dialogOverlay);
         
     } catch (error) {
         console.error("Error publishing assessment:", error);
