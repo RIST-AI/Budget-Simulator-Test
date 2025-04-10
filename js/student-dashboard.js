@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Load the currently active assessment
 async function loadActiveAssessment() {
+    console.log("Active assessment ID:", activeAssessmentId);
+    console.log("Current user ID:", currentUser.uid);
     const container = document.getElementById('current-assessment-container');
     if (!container) return;
     
@@ -51,7 +53,7 @@ async function loadActiveAssessment() {
         const activeAssessmentId = activeDoc.data().assessmentId;
         
         // Get assessment details
-        const assessmentDoc = await getDoc(doc(db, 'submissions', submissionId));
+        const assessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
         if (!assessmentDoc.exists()) {
             container.innerHTML = '<div class="info-message">Error loading active assessment.</div>';
             return;
@@ -60,7 +62,9 @@ async function loadActiveAssessment() {
         const assessment = assessmentDoc.data();
         
         // Check if the student has already submitted this assessment
-        const submissionRef = doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`);
+        const compoundKey = `${currentUser?.uid || ''}_${activeAssessmentId || ''}`;
+        const submissionRef = doc(db, 'submissions', compoundKey);
+        // const submissionRef = doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`);
         const submissionDoc = await getDoc(submissionRef);
         
         let status = 'Not started';
