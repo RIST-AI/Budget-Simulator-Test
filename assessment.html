@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Assessment - RIST Budget Master</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+</head>
+<body style="visibility: hidden;">
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="images/RIST - Primary Colour.jpg" alt="RIST - Rural Industries Skill Training" class="rist-logo">
+                </div>
+                <div class="title-container">
+                    <h1>AHCBUS408 Budget Master</h1>
+                    <p class="global-subtitle">Agricultural Budgeting Training Tool</p>
+                </div>
+                <div id="user-status" class="user-status">
+                    <!-- Login status will be shown here -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <!-- Navigation items will be inserted here by JavaScript -->
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="loading-indicator">Loading...</div>
+        <div id="assessment-content" style="display: none;">
+            <section class="page-header">
+                <h2 id="assessment-title">Farm Budget Assessment</h2>
+                <p id="assessment-description">Complete this assessment to demonstrate your understanding of farm budget management.</p>
+            </section>
+
+            <section class="assessment-instructions">
+                <h3>Instructions</h3>
+                <div id="instructions-text">
+                    Create a budget for the farm, answer the analysis questions, and submit your assessment for review.
+                </div>
+            </section>
+
+            <section class="assessment-scenario">
+                <h3>Scenario</h3>
+                <div id="scenario-text">
+                    <!-- Scenario will be inserted here by JavaScript -->
+                </div>
+            </section>
+
+            <section class="assessment-budget">
+                <h3>Budget Setup</h3>
+                <div id="budget-instructions">
+                    Create a budget for the farm by adding income and expense items.
+                </div>
+
+                <div class="budget-controls">
+                    <div class="form-group">
+                        <label for="farm-type">Farm Type:</label>
+                        <select id="farm-type">
+                            <option value="dairy">Dairy Farm</option>
+                            <option value="crop">Crop Farm</option>
+                            <option value="livestock">Livestock Farm</option>
+                            <option value="mixed" selected>Mixed Farm</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="budget-period">Budget Period:</label>
+                        <select id="budget-period">
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="annual" selected>Annual</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="budget-workspace">
+                    <div class="budget-section">
+                        <h4>Income</h4>
+                        <table class="budget-table" id="income-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price ($)</th>
+                                    <th>Total ($)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" placeholder="Income item"></td>
+                                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                                    <td class="row-total">$0.00</td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button id="add-income" class="btn-small">+ Add Income Item</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>Total Income</strong></td>
+                                    <td id="total-income">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="budget-section">
+                        <h4>Expenses</h4>
+                        <table class="budget-table" id="expense-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price ($)</th>
+                                    <th>Total ($)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" placeholder="Expense item"></td>
+                                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                                    <td class="row-total">$0.00</td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button id="add-expense" class="btn-small">+ Add Expense Item</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>Total Expenses</strong></td>
+                                    <td id="total-expenses">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="budget-summary">
+                        <h4>Budget Summary</h4>
+                        <table class="summary-table">
+                            <tr>
+                                <td>Total Income:</td>
+                                <td id="summary-income">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Total Expenses:</td>
+                                <td id="summary-expenses">$0.00</td>
+                            </tr>
+                            <tr class="net-result">
+                                <td>Net Result:</td>
+                                <td id="net-result">$0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="assessment-analysis">
+                <h3>Analysis Questions</h3>
+                <div id="analysis-instructions">
+                    Based on your budget, answer the following questions.
+                </div>
+                
+                <div class="question-container">
+                    <!-- Questions will be inserted here by JavaScript -->
+                </div>
+            </section>
+
+            <section class="assessment-submission">
+                <div class="submission-buttons">
+                    <button id="save-assessment" class="btn">Save Progress</button>
+                    <button id="submit-assessment" class="btn btn-primary">Submit Assessment</button>
+                </div>
+            </section>
+        </div>
+
+        <div id="submission-success" style="display: none;">
+            <section class="page-header">
+                <h2>Assessment Submitted</h2>
+                <p>Your assessment has been submitted successfully!</p>
+            </section>
+            
+            <section class="submission-details">
+                <p>Thank you for completing the assessment. Your trainer will review your work and provide feedback.</p>
+                <p>You can view your submission status on the dashboard.</p>
+                <div class="submission-buttons">
+                    <a href="index.html" class="btn">Return to Home</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST" class="rist-logo-footer">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 RIST - Rural Industries Skill Training</p>
+                    <p>AHCBUS408 Budget Master</p>
+                </div>
+                <div class="footer-contact">
+                    <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script type="module" src="js/assessment.js"></script>
+    <script type="module" src="js/navigation.js"></script>
+    <script type="module" src="js/site-config.js"></script>
+</body>
+</html>

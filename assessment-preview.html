@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Preview - RIST Budget Master</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    <style>
+        .preview-banner {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
+        
+        .preview-banner button {
+            margin-left: 10px;
+        }
+        
+        .question-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .scenario-box {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #d1ecf1;
+            border-radius: 4px;
+            background-color: #f0f8ff;
+        }
+        
+        .scenario-note {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        
+        .all-scenarios {
+            margin-top: 30px;
+            border-top: 1px dashed #ccc;
+            padding-top: 20px;
+        }
+        .question-text, .scenario-description, #assessment-instructions {
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="images/RIST - Primary Colour.jpg" alt="RIST - Rural Industries Skill Training" class="rist-logo">
+                </div>
+                <div class="title-container">
+                    <h1>AHCBUS408 Budget Master</h1>
+                    <p class="global-subtitle">Agricultural Budgeting Training Tool</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="preview-banner">
+            <strong>PREVIEW MODE</strong> - This is how the assessment will appear to students.
+            <button class="btn-small" onclick="window.close()">Close Preview</button>
+        </div>
+
+        <div id="loading-indicator" class="spinner"></div>
+
+        <div id="assessment-content" style="display: none;">
+            <section class="assessment-intro">
+                <h2 id="assessment-title">Farm Budget Assessment</h2>
+                <p id="assessment-description">Complete this assessment to demonstrate your understanding of farm budget management.</p>
+                
+                <div class="scenario-box">
+                    <h3>Scenario Example</h3>
+                    <p><strong id="scenario-title">Sample Scenario</strong></p>
+                    <p id="scenario-text">This is an example scenario. Students will be randomly assigned one scenario from your list.</p>
+                    <div class="scenario-note">
+                        <p><strong>Note:</strong> When students take the assessment, they will be randomly assigned one scenario from your list.</p>
+                    </div>
+                </div>
+                
+                <div class="instructions-box">
+                    <h3>Instructions</h3>
+                    <p id="instructions-text">Instructions will appear here.</p>
+                </div>
+            </section>
+
+            <section class="assessment-section">
+                <h2>Part 1: Budget Setup</h2>
+                <p>Create a budget for the farm by adding income and expense items.</p>
+                
+                <!-- Budget Section (Simplified) -->
+                <div class="budget-container">
+                    <div class="budget-tables">
+                        <div class="budget-table-container">
+                            <h3>Income</h3>
+                            <table class="budget-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Price ($)</th>
+                                        <th>Total ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" placeholder="Income item" disabled></td>
+                                        <td><input type="number" placeholder="0" disabled></td>
+                                        <td><input type="number" placeholder="0.00" disabled></td>
+                                        <td>$0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="budget-table-container">
+                            <h3>Expenses</h3>
+                            <table class="budget-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Price ($)</th>
+                                        <th>Total ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" placeholder="Expense item" disabled></td>
+                                        <td><input type="number" placeholder="0" disabled></td>
+                                        <td><input type="number" placeholder="0.00" disabled></td>
+                                        <td>$0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="assessment-section">
+                <h2>Part 2: Budget Analysis</h2>
+                <p>Based on your budget, answer the following questions.</p>
+                
+                <div id="questions-container" class="question-container">
+                    <!-- Questions will be added here -->
+                </div>
+            </section>
+            
+            <section class="all-scenarios">
+                <h2>All Scenarios</h2>
+                <p>Below are all the scenarios you've created. Students will be randomly assigned one of these scenarios.</p>
+                <div id="all-scenarios-container">
+                    <!-- All scenarios will be listed here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST" class="rist-logo-footer">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 RIST - Rural Industries Skill Training</p>
+                    <p>AHCBUS408 Budget Master</p>
+                </div>
+                <div class="footer-contact">
+                    <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get assessment data from localStorage
+            const previewDataString = localStorage.getItem('assessmentPreview');
+            if (!previewDataString) {
+                document.getElementById('loading-indicator').innerHTML = `
+                    <div class="error-message">No preview data found. Please go back to the editor and try again.</div>
+                    <button class="btn" onclick="window.close()">Close Preview</button>
+                `;
+                return;
+            }
+            
+            try {
+                const previewData = JSON.parse(previewDataString);
+                
+                // Populate assessment details - use innerHTML for text that needs to preserve line breaks
+                document.getElementById('assessment-title').textContent = previewData.title || 'Farm Budget Assessment';
+                document.getElementById('assessment-description').innerHTML = previewData.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
+                document.getElementById('instructions-text').innerHTML = previewData.instructions || 'Instructions will appear here.';
+                
+                // Populate example scenario
+                if (previewData.scenarios && previewData.scenarios.length > 0) {
+                    // Pick the first scenario for the example
+                    const scenario = previewData.scenarios[0];
+                    document.getElementById('scenario-title').textContent = scenario.title || 'Sample Scenario';
+                    document.getElementById('scenario-text').innerHTML = scenario.description || 'No scenario description provided.';
+                }
+                
+                // Populate all scenarios
+                const allScenariosContainer = document.getElementById('all-scenarios-container');
+                allScenariosContainer.innerHTML = '';
+                
+                if (previewData.scenarios && previewData.scenarios.length > 0) {
+                    previewData.scenarios.forEach((scenario, index) => {
+                        const scenarioDiv = document.createElement('div');
+                        scenarioDiv.className = 'scenario-box';
+                        
+                        scenarioDiv.innerHTML = `
+                            <h3>Scenario ${index + 1}</h3>
+                            <p><strong>${scenario.title || 'Untitled Scenario'}</strong></p>
+                            <div class="scenario-description">${scenario.description || 'No description provided.'}</div>
+                        `;
+                        
+                        allScenariosContainer.appendChild(scenarioDiv);
+                    });
+                } else {
+                    allScenariosContainer.innerHTML = '<p>No scenarios have been added to this assessment.</p>';
+                }
+                
+                // Populate questions
+                const questionsContainer = document.getElementById('questions-container');
+                questionsContainer.innerHTML = '';
+                
+                if (previewData.questions && previewData.questions.length > 0) {
+                    previewData.questions.forEach((question, index) => {
+                        const questionDiv = document.createElement('div');
+                        questionDiv.className = 'question';
+                        
+                        questionDiv.innerHTML = `
+                            <h3>Question ${index + 1}</h3>
+                            <div class="question-text">${question.text || 'No question text provided.'}</div>
+                            <textarea rows="5" placeholder="Student answer will go here..." disabled></textarea>
+                            <p class="points-value">Points: ${question.points || 10}</p>
+                        `;
+                        
+                        questionsContainer.appendChild(questionDiv);
+                    });
+                } else {
+                    questionsContainer.innerHTML = '<p>No questions have been added to this assessment.</p>';
+                }
+                
+                // Hide loading indicator and show content
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('assessment-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading preview data:', error);
+                document.getElementById('loading-indicator').innerHTML = `
+                    <div class="error-message">Error loading preview data: ${error.message}</div>
+                    <button class="btn" onclick="window.close()">Close Preview</button>
+                `;
+            }
+        });
+    </script>
+    <script type="module" src="js/site-config.js"></script>
+</body>
+</html>
