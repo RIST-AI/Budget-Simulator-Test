@@ -578,7 +578,7 @@ async function publishAssessment() {
         
         // If there's an active assessment, ask whether to update or create new
         if (activeAssessmentId && activeAssessmentTitle) {
-            const updateExisting = confirm(`Do you want to:\n\nUPDATE the current active assessment "${activeAssessmentTitle}"\n\nor\n\nCLOSE current assessment and PUBLISH "${currentTitle}" as new?\n\nClick OK to update current, Cancel to publish new.`);
+            const updateExisting = confirm(`Do you want to:\n\nUPDATE the current active assessment "${activeAssessmentTitle}"\n\nor\n\nPUBLISH "${currentTitle}" as a NEW assessment?\n\nClick OK to update current, Cancel to publish new.`);
             
             if (updateExisting) {
                 // Update existing assessment logic
@@ -593,8 +593,12 @@ async function publishAssessment() {
         const assessmentId = await createNewAssessment();
         if (!assessmentId) return; // Error already handled
         
-        // Ask if they want to make the new assessment active
-        const makeActive = confirm("Would you like to make this the active assessment for students?");
+        // For a new assessment, ask if it should replace the current active assessment
+        let activateMessage = activeAssessmentId ? 
+            `Do you want to make "${currentTitle}" the ACTIVE assessment for students?\n\n(This will replace "${activeAssessmentTitle}" as the active assessment.)` :
+            `Do you want to make "${currentTitle}" the ACTIVE assessment for students?`;
+            
+        const makeActive = confirm(activateMessage);
         if (makeActive) {
             await setDoc(activeAssessmentRef, {
                 assessmentId: assessmentId,
@@ -603,7 +607,7 @@ async function publishAssessment() {
             });
             showStatusMessage("New assessment published and set as active!", "success");
         } else {
-            showStatusMessage("New assessment published successfully!", "success");
+            showStatusMessage("New assessment published successfully (not set as active).", "success");
         }
         
     } catch (error) {
