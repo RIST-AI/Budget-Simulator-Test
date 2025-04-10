@@ -673,54 +673,83 @@ async function publishAssessment() {
 
 // Helper function to update existing assessment
 async function updateExistingAssessment(assessmentId) {
-    // Gather all assessment data
-    const title = document.getElementById('assessment-title').value;
-    const description = document.getElementById('assessment-description').value;
-    const instructions = document.getElementById('assessment-instructions').value;
-    
-    // Collect questions
-    const questions = [];
-    document.querySelectorAll('.question-container').forEach(element => {
-        const questionId = element.getAttribute('data-question-id');
-        const questionText = element.querySelector('.question-text').value;
+    try {
+        // First check if the document exists
+        const assessmentDocRef = doc(db, 'assessments', assessmentId);
+        const assessmentDoc = await getDoc(assessmentDocRef);
         
-        if (questionText.trim()) { // Only add non-empty questions
-            questions.push({
-                id: questionId,
-                text: questionText
-            });
+        // If document doesn't exist, create a new one instead
+        if (!assessmentDoc.exists()) {
+            console.log(`Assessment ${assessmentId} doesn't exist, creating new document`);
+            // Create a new assessment instead
+            const newAssessmentId = await createNewAssessment();
+            
+            // Update active assessment reference to point to the new assessment
+            if (newAssessmentId) {
+                await setDoc(activeAssessmentRef, {
+                    assessmentId: newAssessmentId,
+                    activatedAt: serverTimestamp(),
+                    activatedBy: currentUser.uid
+                });
+                
+                showStatusMessage("Created new assessment (previous assessment not found)", "success");
+                return newAssessmentId;
+            }
+            return null;
         }
-    });
-    
-    // Collect scenarios
-    const scenarios = [];
-    document.querySelectorAll('.scenario-container').forEach(element => {
-        const scenarioId = element.getAttribute('data-scenario-id');
-        const scenarioTitle = element.querySelector('.scenario-title').value;
-        const scenarioDescription = element.querySelector('.scenario-description').value;
         
-        if (scenarioTitle.trim() && scenarioDescription.trim()) {
-            scenarios.push({
-                id: scenarioId,
-                title: scenarioTitle,
-                description: scenarioDescription
-            });
-        }
-    });
-    
-    // Update the existing assessment
-    const assessmentRef = doc(db, 'assessments', assessmentId);
-    await updateDoc(assessmentRef, {
-        title,
-        description,
-        instructions,
-        questions,
-        scenarios,
-        updatedAt: serverTimestamp(),
-        updatedBy: currentUser.uid
-    });
-    
-    return assessmentId;
+        // Gather all assessment data
+        const title = document.getElementById('assessment-title').value;
+        const description = document.getElementById('assessment-description').value;
+        const instructions = document.getElementById('assessment-instructions').value;
+        
+        // Collect questions
+        const questions = [];
+        document.querySelectorAll('.question-container').forEach(element => {
+            const questionId = element.getAttribute('data-question-id');
+            const questionText = element.querySelector('.question-text').value;
+            
+            if (questionText.trim()) { // Only add non-empty questions
+                questions.push({
+                    id: questionId,
+                    text: questionText
+                });
+            }
+        });
+        
+        // Collect scenarios
+        const scenarios = [];
+        document.querySelectorAll('.scenario-container').forEach(element => {
+            const scenarioId = element.getAttribute('data-scenario-id');
+            const scenarioTitle = element.querySelector('.scenario-title').value;
+            const scenarioDescription = element.querySelector('.scenario-description').value;
+            
+            if (scenarioTitle.trim() && scenarioDescription.trim()) {
+                scenarios.push({
+                    id: scenarioId,
+                    title: scenarioTitle,
+                    description: scenarioDescription
+                });
+            }
+        });
+        
+        // Update the existing assessment
+        await updateDoc(assessmentDocRef, {
+            title,
+            description,
+            instructions,
+            questions,
+            scenarios,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid
+        });
+        
+        return assessmentId;
+    } catch (error) {
+        console.error("Error updating existing assessment:", error);
+        showStatusMessage(`Error updating assessment: ${error.message}`, 'error');
+        return null;
+    }
 }
 
 // Preview assessment
