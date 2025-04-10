@@ -111,6 +111,20 @@ function setupEventListeners() {
     if (saveSiteSettingsButton) {
         saveSiteSettingsButton.addEventListener('click', saveSiteSettings);
     }
+
+    // Manage assessments
+    const refreshAssessmentsButton = document.getElementById('refresh-assessments');
+    if (refreshAssessmentsButton) {
+        refreshAssessmentsButton.addEventListener('click', loadExistingAssessments);
+    }
+
+    // Initial load of existing assessments when switching to that tab
+    document.querySelectorAll('.tab-button').forEach(button => {
+        if (button.getAttribute('data-tab') === 'manage-tab') {
+            button.addEventListener('click', loadExistingAssessments);
+        }
+    });
+
     
     // Live preview for site settings
     const courseNameInput = document.getElementById('course-name');
@@ -352,7 +366,6 @@ async function loadSiteSettings() {
 }
 
 // Save site settings to Firestore
-// Save site settings to Firestore
 async function saveSiteSettings() {
     try {
         // Get values from form
@@ -396,6 +409,81 @@ async function saveSiteSettings() {
     } catch (error) {
         console.error("Error saving site settings:", error);
         showStatusMessage('Error saving site settings: ' + error.message, 'error');
+    }
+}
+
+// Function to create a new assessment with a unique ID
+async function createNewAssessment() {
+    try {
+        // Create a new assessment document reference with auto-generated ID
+        const newAssessmentRef = doc(collection(db, 'assessments'));
+        const assessmentId = newAssessmentRef.id;
+        
+        // Collect data from the form
+        const title = document.getElementById('assessment-title').value;
+        const description = document.getElementById('assessment-description').value;
+        const instructions = document.getElementById('assessment-instructions').value;
+        
+        // Validate required fields
+        if (!title || !description || !instructions) {
+            showStatusMessage('Please fill in all required fields.', 'error');
+            return null;
+        }
+        
+        // Collect questions
+        const questions = [];
+        const questionElements = document.querySelectorAll('.question-container');
+        questionElements.forEach(element => {
+            const questionId = element.getAttribute('data-question-id');
+            const questionText = element.querySelector('.question-text').value;
+            
+            if (questionText.trim()) { // Only add non-empty questions
+                questions.push({
+                    id: questionId,
+                    text: questionText
+                });
+            }
+        });
+        
+        // Collect scenarios
+        const scenarios = [];
+        const scenarioElements = document.querySelectorAll('.scenario-container');
+        scenarioElements.forEach(element => {
+            const scenarioId = element.getAttribute('data-scenario-id');
+            const scenarioTitle = element.querySelector('.scenario-title').value;
+            const scenarioDescription = element.querySelector('.scenario-description').value;
+            
+            if (scenarioTitle.trim() && scenarioDescription.trim()) { // Only add complete scenarios
+                scenarios.push({
+                    id: scenarioId,
+                    title: scenarioTitle,
+                    description: scenarioDescription
+                });
+            }
+        });
+        
+        // Create assessment data
+        const assessmentData = {
+            id: assessmentId,
+            title,
+            description,
+            instructions,
+            questions,
+            scenarios,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: currentUser.uid,
+            published: true
+        };
+        
+        // Save to Firestore
+        await setDoc(newAssessmentRef, assessmentData);
+        
+        return assessmentId;
+    } catch (error) {
+        console.error("Error creating assessment:", error);
+        showStatusMessage('Error creating assessment: ' + error.message, 'error');
+        return null;
     }
 }
 
@@ -480,32 +568,110 @@ async function saveAssessment() {
 async function publishAssessment() {
     try {
         // First save the assessment
-        await saveAssessment();
+        const assessmentId = await createNewAssessment();
         
-        // Update the published status
-        assessmentData.published = true;
-        assessmentData.publishedAt = serverTimestamp();
-        assessmentData.publishedBy = currentUser.uid;
+        if (!assessmentId) {
+            return; // Error already handled in createNewAssessment
+        }
         
-        // Save to Firestore (template)
-        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
-        await updateDoc(assessmentRef, {
-            published: true,
-            publishedAt: serverTimestamp(),
-            publishedBy: currentUser.uid
-        });
-        
-        // Copy the assessment to the assessmentContent collection for students
-        const contentRef = doc(db, 'assessmentContent', 'current');
-        await setDoc(contentRef, {
-            ...assessmentData,
-            lastPublished: serverTimestamp()
-        });
-        
-        showStatusMessage('Assessment published successfully! Students can now access this assessment.', 'success');
+        // Ask user if they want to make this the active assessment
+        const activateNow = confirm("Would you like to make this the active assessment for students?");
+        if (activateNow) {
+            await setDoc(activeAssessmentRef, {
+                assessmentId: assessmentId,
+                activatedAt: serverTimestamp(),
+                activatedBy: currentUser.uid
+            });
+            showStatusMessage("Assessment published and activated successfully!", "success");
+        } else {
+            showStatusMessage("Assessment published successfully!", "success");
+        }
     } catch (error) {
         console.error("Error publishing assessment:", error);
         showStatusMessage('Error publishing assessment: ' + error.message, 'error');
+    }
+}
+
+// Function to load existing assessments
+async function loadExistingAssessments() {
+    const assessmentsContainer = document.getElementById('assessments-list');
+    if (!assessmentsContainer) return;
+    
+    assessmentsContainer.innerHTML = '<p>Loading assessments...</p>';
+    
+    try {
+        // Get all assessments
+        const assessmentsSnapshot = await getDocs(collection(db, 'assessments'));
+        
+        if (assessmentsSnapshot.empty) {
+            assessmentsContainer.innerHTML = '<p>No assessments found.</p>';
+            return;
+        }
+        
+        // Get active assessment ID
+        let activeId = null;
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                activeId = activeDoc.data().assessmentId;
+            }
+        } catch (error) {
+            console.error("Error getting active assessment:", error);
+        }
+        
+        // Build HTML for assessments
+        let html = '<div class="assessments-grid">';
+        
+        assessmentsSnapshot.forEach(doc => {
+            const assessment = doc.data();
+            const isActive = doc.id === activeId;
+            
+            html += `
+                <div class="assessment-card ${isActive ? 'active-assessment' : ''}">
+                    <div class="assessment-card-header">
+                        <div class="assessment-type">${assessment.title || 'Unnamed Assessment'}</div>
+                        <div class="assessment-status">${isActive ? 'ACTIVE' : 'Inactive'}</div>
+                    </div>
+                    <p>${assessment.description || 'No description'}</p>
+                    <p><strong>Questions:</strong> ${assessment.questions?.length || 0}</p>
+                    <p><strong>Scenarios:</strong> ${assessment.scenarios?.length || 0}</p>
+                    <div class="assessment-actions">
+                        ${!isActive ? 
+                            `<button class="btn" onclick="activateAssessment('${doc.id}')">Activate</button>` : 
+                            `<button class="btn" disabled>Currently Active</button>`}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        assessmentsContainer.innerHTML = html;
+    } catch (error) {
+        console.error("Error loading assessments:", error);
+        assessmentsContainer.innerHTML = `<p class="error-message">Error loading assessments: ${error.message}</p>`;
+    }
+}
+
+// Function to activate an assessment
+async function activateAssessment(assessmentId) {
+    try {
+        if (!confirm("Are you sure you want to activate this assessment? This will make it visible to all students.")) {
+            return;
+        }
+        
+        await setDoc(activeAssessmentRef, {
+            assessmentId: assessmentId,
+            activatedAt: serverTimestamp(),
+            activatedBy: currentUser.uid
+        });
+        
+        showStatusMessage("Assessment activated successfully!", "success");
+        
+        // Reload the assessment list
+        await loadExistingAssessments();
+    } catch (error) {
+        console.error("Error activating assessment:", error);
+        showStatusMessage("Error activating assessment: " + error.message, "error");
     }
 }
 
@@ -712,3 +878,5 @@ function showStatusMessage(message, type = 'success') {
         }, 5000);
     }
 }
+
+window.activateAssessment = activateAssessment;

@@ -50,6 +50,7 @@
                     <button class="tab-button" data-tab="questions-tab">Questions</button>
                     <button class="tab-button" data-tab="scenarios-tab">Scenarios</button>
                     <button class="tab-button" data-tab="site-settings-tab">Site Settings</button>
+                    <button class="tab-button" data-tab="manage-tab">Manage Assessments</button>
                 </div>
 
                 <div id="general-tab" class="tab-content" style="display: block;">
@@ -126,6 +127,18 @@
 
                     <div class="form-actions">
                         <button id="save-site-settings" class="btn btn-primary">Save Site Settings</button>
+                    </div>
+                </div>
+                <div id="manage-tab" class="tab-content">
+                    <h3>Manage Assessments</h3>
+                    <p>View, activate, and manage existing assessments.</p>
+                    
+                    <div class="form-group">
+                        <button id="refresh-assessments" class="btn">Refresh Assessment List</button>
+                    </div>
+                    
+                    <div id="assessments-list" class="assessment-list">
+                        <p>Loading assessments...</p>
                     </div>
                 </div>
             </div>

@@ -48,6 +48,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const activeAssessmentRef = doc(db, 'config', 'activeAssessment');
+const submissionsCollection = collection(db, 'submissions');
+
+// Helper function to get submission document reference (using composite key)
+function getSubmissionRef(userId, assessmentId) {
+  return doc(db, 'submissions', `${userId}_${assessmentId}`);
+}
+
+// Helper function to get student budget reference
+function getStudentBudgetRef(userId) {
+  return doc(db, 'studentBudgets', userId);
+}
 
 // Export the Firebase services
 export {
@@ -77,5 +89,9 @@ export {
   Timestamp,
   arrayUnion,
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  activeAssessmentRef,
+  submissionsCollection,
+  getSubmissionRef,
+  getStudentBudgetRef
 };
