@@ -85,6 +85,27 @@ function showErrorMessage(message) {
 // Load assessment content
 async function loadAssessmentContent() {
     try {
+        // Function to show error messages
+        function displayError(message) {
+            // Hide loading indicator
+            const loadingIndicator = document.getElementById('loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Create error element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.innerHTML = `
+                <h4>Error Loading Assessment</h4>
+                <p>${message}</p>
+                <button class="btn" onclick="location.reload()">Try Again</button>
+            `;
+            
+            // Insert after loading indicator
+            loadingIndicator.parentNode.insertBefore(errorDiv, loadingIndicator.nextSibling);
+        }
+        
         // Try to get the active assessment ID
         let activeAssessmentId = null;
         try {
@@ -92,55 +113,105 @@ async function loadAssessmentContent() {
             if (activeDoc.exists()) {
                 activeAssessmentId = activeDoc.data().assessmentId;
             } else {
-                document.getElementById('assessment-container').innerHTML = `
-                    <div class="alert alert-warning">
-                        No active assessment is currently available.
-                        Please contact your instructor for more information.
-                    </div>
-                `;
+                displayError("No active assessment is currently available. Please contact your instructor.");
                 return;
             }
         } catch (error) {
             console.error("Error getting active assessment:", error);
-            document.getElementById('assessment-container').innerHTML = `
-                <div class="alert alert-danger">
-                    <h4>Error Loading Assessment</h4>
-                    <p>Could not load the active assessment.</p>
-                    <p>Error details: ${error.message}</p>
-                    <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
-                </div>
-            `;
+            
+            // Specific handling for permission error
+            if (error.code === 'permission-denied') {
+                displayError("You don't have permission to access the assessment. Please make sure you're logged in with the correct account.");
+            } else {
+                displayError(`Could not load the active assessment: ${error.message}`);
+            }
             return;
         }
 
         // Try to get the assessment content
-        const assessmentRef = doc(db, 'assessments', activeAssessmentId);
-        const assessmentDoc = await getDoc(assessmentRef);
-        
-        if (!assessmentDoc.exists()) {
-            document.getElementById('assessment-container').innerHTML = `
-                <div class="alert alert-warning">
-                    The active assessment (ID: ${activeAssessmentId}) could not be found.
-                    Please contact your instructor.
-                </div>
-            `;
-            return;
+        try {
+            const assessmentRef = doc(db, 'assessments', activeAssessmentId);
+            const assessmentDoc = await getDoc(assessmentRef);
+            
+            if (!assessmentDoc.exists()) {
+                displayError(`The active assessment (ID: ${activeAssessmentId}) could not be found. Please contact your instructor.`);
+                return;
+            }
+            
+            // We have the assessment data, proceed with display
+            const assessmentData = assessmentDoc.data();
+            displayAssessment(assessmentData);
+            
+        } catch (error) {
+            console.error("Error loading assessment content:", error);
+            
+            // Specific handling for permission error
+            if (error.code === 'permission-denied') {
+                displayError("You don't have permission to access this assessment. This might be because the security rules are still updating or you're using the wrong account.");
+            } else {
+                displayError(`Failed to load the assessment content: ${error.message}`);
+            }
         }
         
-        // We have the assessment data, proceed with display
-        const assessmentData = assessmentDoc.data();
-        displayAssessment(assessmentData);
-        
     } catch (error) {
-        console.error("Error loading assessment content:", error);
-        document.getElementById('assessment-container').innerHTML = `
-            <div class="alert alert-danger">
-                <h4>Error Loading Assessment</h4>
-                <p>Failed to load the assessment content.</p>
-                <p>Error details: ${error.message}</p>
-                <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+        console.error("Error in assessment loading process:", error);
+        displayError(`An unexpected error occurred while loading the assessment: ${error.message}`);
+    }
+}
+
+// Display assessment content
+function displayAssessment(assessmentData) {
+    // Hide loading indicator
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
+    // Show assessment content
+    const assessmentContent = document.getElementById('assessment-content');
+    if (assessmentContent) {
+        assessmentContent.style.display = 'block';
+    }
+    
+    // Fill in the assessment details
+    document.getElementById('assessment-title').textContent = assessmentData.title || 'Farm Budget Assessment';
+    document.getElementById('assessment-description').textContent = assessmentData.description || '';
+    document.getElementById('instructions-text').textContent = assessmentData.instructions || '';
+    
+    // Handle scenarios - select one if available
+    if (assessmentData.scenarios && assessmentData.scenarios.length > 0) {
+        // For simplicity, use the first scenario (or you could implement a dropdown)
+        const scenarioHTML = `
+            <div class="scenario">
+                <h4>${assessmentData.scenarios[0].title}</h4>
+                <p>${assessmentData.scenarios[0].description}</p>
             </div>
         `;
+        document.getElementById('scenario-text').innerHTML = scenarioHTML;
+    } else {
+        document.getElementById('scenario-text').innerHTML = '<p>No scenario available for this assessment.</p>';
+    }
+    
+    // Handle questions
+    if (assessmentData.questions && assessmentData.questions.length > 0) {
+        let questionsHTML = '';
+        
+        assessmentData.questions.forEach((question, index) => {
+            questionsHTML += `
+                <div class="question">
+                    <div class="question-text">
+                        <p><strong>Question ${index + 1}:</strong> ${question.text}</p>
+                    </div>
+                    <div class="answer-area">
+                        <textarea id="answer-${question.id}" placeholder="Enter your answer here..." rows="4"></textarea>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.querySelector('.question-container').innerHTML = questionsHTML;
+    } else {
+        document.querySelector('.question-container').innerHTML = '<p>No questions available for this assessment.</p>';
     }
 }
 
@@ -225,6 +296,80 @@ async function loadPreviousBudgetData() {
         console.error("Error loading previous budget data:", error);
     }
 }
+
+// Debug function to check permissions
+async function debugPermissions() {
+    try {
+        // Create debug container
+        const debugEl = document.createElement('div');
+        debugEl.className = 'container mt-4 p-3 bg-light border';
+        debugEl.style.margin = '20px';
+        debugEl.style.padding = '15px';
+        debugEl.style.backgroundColor = '#f8f9fa';
+        debugEl.style.border = '1px solid #ddd';
+        
+        let debugInfo = "<h5>Permissions Debug Info</h5>";
+        
+        // Check if user is authenticated
+        const user = auth.currentUser;
+        debugInfo += `<p><strong>User authenticated:</strong> ${user ? "Yes" : "No"}</p>`;
+        
+        if (user) {
+            debugInfo += `<p><strong>User ID:</strong> ${user.uid}</p>`;
+            debugInfo += `<p><strong>Email:</strong> ${user.email}</p>`;
+            
+            // Try to get user role
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    debugInfo += `<p><strong>User role:</strong> ${userDoc.data().role || 'not set'}</p>`;
+                } else {
+                    debugInfo += `<p><strong>User document:</strong> Not found</p>`;
+                }
+            } catch (error) {
+                debugInfo += `<p><strong>Error getting user data:</strong> ${error.message}</p>`;
+            }
+        }
+        
+        // Try to access activeAssessment document
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                const activeId = activeDoc.data().assessmentId;
+                debugInfo += `<p><strong>Active assessment ID:</strong> ${activeId}</p>`;
+                
+                // Try to access the assessment document
+                try {
+                    const assessmentDoc = await getDoc(doc(db, 'assessments', activeId));
+                    if (assessmentDoc.exists()) {
+                        debugInfo += `<p><strong>Assessment title:</strong> ${assessmentDoc.data().title}</p>`;
+                        debugInfo += `<p style="color: green"><strong>✓ Success!</strong> You can access the assessment document.</p>`;
+                    } else {
+                        debugInfo += `<p style="color: red"><strong>✗ Error:</strong> Assessment document not found.</p>`;
+                    }
+                } catch (error) {
+                    debugInfo += `<p style="color: red"><strong>✗ Error accessing assessment:</strong> ${error.message}</p>`;
+                    debugInfo += `<p>This suggests your security rules need adjustment.</p>`;
+                }
+                
+            } else {
+                debugInfo += `<p style="color: orange"><strong>⚠ Warning:</strong> No active assessment found.</p>`;
+            }
+        } catch (error) {
+            debugInfo += `<p style="color: red"><strong>✗ Error accessing active assessment:</strong> ${error.message}</p>`;
+            debugInfo += `<p>This suggests your security rules need adjustment.</p>`;
+        }
+        
+        debugEl.innerHTML = debugInfo;
+        document.body.appendChild(debugEl);
+    } catch (err) {
+        console.error("Error in debug function:", err);
+    }
+}
+
+// Add this at the end of your document.addEventListener('DOMContentLoaded', async function() {})
+// Near the end of your initialization code:
+debugPermissions();
 
 // Add helper function for row event listeners
 function addEventListenersToRow(row) {
