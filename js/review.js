@@ -1,4 +1,4 @@
-import { auth, db, collection, query, submissionsRef, activeAssessmentRef, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
+import { auth, db, collection, query, activeAssessmentRef, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
 import { requireRole, initAuth, getCurrentUser } from './auth.js';
 
 // Initialize authentication
