@@ -1,5 +1,5 @@
 // Import Firebase modules
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc } from './firebase-config.js';
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc, activeAssessmentRef } from './firebase-config.js';
 import { requireStudent, updateNavigation } from './auth.js';
 
 // Global variables
