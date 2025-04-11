@@ -208,7 +208,7 @@ async function loadSubmissions(status = 'active') {
                 let assessmentTitle = 'Assessment';
                 try {
                     if (submission.assessmentId) {
-                        const assessmentDoc = await getDoc(doc(db, 'submissions', submission.assessmentId));
+                        const assessmentDoc = await getDoc(doc(db, 'assessments', submission.assessmentId));
                         if (assessmentDoc.exists()) {
                             assessmentTitle = assessmentDoc.data().title || 'Assessment';
                         }

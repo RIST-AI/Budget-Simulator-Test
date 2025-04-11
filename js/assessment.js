@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Load assessment content
         await loadAssessmentContent();
+        // Add this line:
+        await loadPreviousBudgetData();
         
         // Check if user already has an assessment in progress
         await checkExistingSubmission();

@@ -31,14 +31,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadAssessment(assessmentId, accessToken) {
     try {
         // Get assessment document
-        const assessmentRef = doc(db, 'assessments', assessmentId);
+        const assessmentRef = doc(db, 'submissions', assessmentId);
         const assessmentDoc = await getDoc(assessmentRef);
         
         if (!assessmentDoc.exists()) {
+            console.error(`Submission ID ${assessmentId} not found`);
             throw new Error('Assessment not found');
         }
         
         const assessment = assessmentDoc.data();
+        console.log("Found submission:", assessment);
+
+        console.log(`Token validation: expected=${assessment.publicAccessToken}, actual=${accessToken}`);
         
         // Check if assessment is finalised and has a matching public access token
         if (assessment.status !== 'finalised') {
@@ -250,7 +254,7 @@ async function loadComments(assessmentId) {
     if (!commentsContainer) return;
     
     try {
-        const commentsRef = collection(db, 'assessments', assessmentId, 'comments');
+        const commentsRef = collection(db, 'submissions', assessmentId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
         
         const snapshot = await getDocs(q);
