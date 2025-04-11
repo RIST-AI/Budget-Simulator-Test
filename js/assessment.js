@@ -58,13 +58,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (assessmentContent) {
             assessmentContent.style.display = 'block';
         }
-
-        bindRemoveButtonEvents();
+        fixRemoveButtons();
     } catch (error) {
         console.error("Error initializing assessment:", error);
         showErrorMessage("Error loading assessment: " + error.message);
     }
 });
+
+function fixRemoveButtons() {
+    // Target the actual button classes in your HTML
+    document.querySelectorAll('#income-table .btn-remove, #expense-table .btn-remove').forEach(button => {
+        // Set the onclick property directly (avoids event listener issues)
+        button.onclick = function() {
+            const row = this.closest('tr');
+            if (row) {
+                const tbody = row.closest('tbody');
+                if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                    row.remove();
+                    updateBudgetTotals();
+                }
+            }
+        };
+    });
+}
 
 // Show error message
 function showErrorMessage(message) {
@@ -295,7 +311,6 @@ async function loadPreviousBudgetData() {
             
             // Update budget totals
             updateBudgetTotals();
-            bindRemoveButtonEvents();
 
         }
     } catch (error) {
@@ -303,80 +318,18 @@ async function loadPreviousBudgetData() {
     }
 }
 
-function bindRemoveButtonEvents() {
-    // Bind remove buttons in income table
-    document.querySelectorAll('#income-table .btn-remove').forEach(button => {
-        // Remove any existing event listeners to prevent duplicates
-        const newButton = button.cloneNode(true);
-        if (button.parentNode) {
-            button.parentNode.replaceChild(newButton, button);
-            
-            // Add fresh event listener
-            newButton.addEventListener('click', function() {
-                const row = this.closest('tr');
-                if (row) {
-                    const tbody = row.closest('tbody');
-                    if (tbody && tbody.querySelectorAll('tr').length > 1) {
-                        row.remove();
-                        updateBudgetTotals();
-                    }
-                }
-            });
-        }
-    });
-    
-    // Bind remove buttons in expense table
-    document.querySelectorAll('#expense-table .btn-remove').forEach(button => {
-        // Remove any existing event listeners to prevent duplicates
-        const newButton = button.cloneNode(true);
-        if (button.parentNode) {
-            button.parentNode.replaceChild(newButton, button);
-            
-            // Add fresh event listener
-            newButton.addEventListener('click', function() {
-                const row = this.closest('tr');
-                if (row) {
-                    const tbody = row.closest('tbody');
-                    if (tbody && tbody.querySelectorAll('tr').length > 1) {
-                        row.remove();
-                        updateBudgetTotals();
-                    }
-                }
-            });
-        }
-    });
-    
-    // For backwards compatibility with any .remove-item-btn classes
-    document.querySelectorAll('#income-items-container .remove-item-btn, #expense-items-container .remove-item-btn').forEach(button => {
-        // Remove any existing event listeners to prevent duplicates
-        const newButton = button.cloneNode(true);
-        if (button.parentNode) {
-            button.parentNode.replaceChild(newButton, button);
-            
-            // Add fresh event listener
-            newButton.addEventListener('click', function() {
-                const itemRow = this.closest('.budget-item');
-                if (itemRow) {
-                    itemRow.remove();
-                    updateBudgetTotals();
-                }
-            });
-        }
-    });
-}
-
 // Add helper function for row event listeners
 function addEventListenersToRow(row) {
     // Add event listener to remove button
     const removeButton = row.querySelector('.btn-remove');
     if (removeButton) {
-        removeButton.addEventListener('click', function() {
+        removeButton.onclick = function() {
             const tbody = row.closest('tbody');
             if (tbody && tbody.querySelectorAll('tr').length > 1) {
                 row.remove();
                 updateBudgetTotals();
             }
-        });
+        };
     }
     
     // Add event listeners for quantity and price inputs
