@@ -204,19 +204,8 @@ async function loadSubmissions(status = 'active') {
                     }
                 }
                 
-                // Get assessment title
-                let assessmentTitle = 'Assessment';
-                try {
-                    if (submission.assessmentId) {
-                        const assessmentDoc = await getDoc(doc(db, 'assessments', submission.assessmentId));
-                        if (assessmentDoc.exists()) {
-                            assessmentTitle = assessmentDoc.data().title || 'Assessment';
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error fetching assessment data:", error);
-                }
-                
+                const assessmentTitle = submission.assessmentTitle || 'Assessment';
+
                 submission.assessmentTitle = assessmentTitle;
                 
                 // Add to student's submissions
@@ -259,14 +248,23 @@ async function loadSubmissions(status = 'active') {
                                 <div class="assessment-duration">${submissionDate}</div>
                             </div>
                             <p>Status: ${submission.status || 'Submitted'}</p>
-                            <p>Farm Type: ${submission.budget?.farmType || 'Not specified'}</p>
+                            <p>Assessment: ${submission.assessmentTitle || 'Not specified'}</p>
                             <div class="assessment-actions">
                                 <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
                                 ${status === 'active' ? 
                                     `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
                                     `<button class="btn btn-primary" onclick="viewPublicUrl('${submission.id}')">View Public URL</button>
-                                    <button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
-                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
+                                    <button id="reopen-btn-${submission.id}" class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
+                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>
+                                    <script>
+                                        // Check if this is current assessment and hide button if not
+                                        (async function() {
+                                            const canReopen = await isCurrentActiveAssessment('${submission.assessmentId}');
+                                            if (!canReopen) {
+                                                document.getElementById('reopen-btn-${submission.id}').style.display = 'none';
+                                            }
+                                        })();
+                                    </script>`
                                 }
                             </div>
                         </div>
@@ -666,6 +664,16 @@ async function loadComments(submissionId) {
     } catch (error) {
         console.error("Error loading comments:", error);
         commentsContainer.innerHTML = `<p>Error loading comments: ${error.message}</p>`;
+    }
+}
+
+async function isCurrentActiveAssessment(assessmentId) {
+    try {
+        const activeDoc = await getDoc(activeAssessmentRef);
+        return activeDoc.exists() && activeDoc.data().assessmentId === assessmentId;
+    } catch (error) {
+        console.error("Error checking active assessment:", error);
+        return false;
     }
 }
 

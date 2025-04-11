@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Load assessment content
         await loadAssessmentContent();
-        // Add this line:
         await loadPreviousBudgetData();
         
         // Check if user already has an assessment in progress
@@ -1205,6 +1204,20 @@ async function submitAssessment() {
         // Collect answers
         const answers = collectAnswers();
         
+        // Get assessment title before submission
+    let assessmentTitle = "Assessment";
+    try {
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        if (activeAssessmentDoc.exists()) {
+            const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+            const assessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
+            if (assessmentDoc.exists()) {
+                assessmentTitle = assessmentDoc.data().title || "Assessment";
+            }
+        }
+    } catch (error) {
+        console.error("Error getting assessment title:", error);
+    }
         // Create assessment data
         const assessmentData = {
             userId: currentUser.uid,
@@ -1217,7 +1230,8 @@ async function submitAssessment() {
             submitted: true,
             feedback: null,
             grade: null,
-            feedbackHistory: [] // Initialize feedback history array
+            feedbackHistory: [], // Initialize feedback history array
+            assessmentTitle: assessmentTitle
         };
         
         // Get the active assessment ID
