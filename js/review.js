@@ -171,6 +171,17 @@ async function loadSubmissions(status = 'active') {
         
         // Process each submission and build HTML
         const processSubmissions = async () => {
+            // Get active assessment ID once at the beginning - OUTSIDE all loops
+            let activeAssessmentId = null;
+            try {
+                const activeDoc = await getDoc(activeAssessmentRef);
+                if (activeDoc.exists()) {
+                    activeAssessmentId = activeDoc.data().assessmentId;
+                }
+            } catch (error) {
+                console.error("Error getting active assessment:", error);
+            }
+            
             // Group submissions by student
             const studentSubmissions = {};
             
@@ -179,37 +190,8 @@ async function loadSubmissions(status = 'active') {
                 const submission = docSnapshot.data();
                 submission.id = docSnapshot.id;
                 
-                // Get student info
-                const userId = submission.userId;
-                if (!userId) continue;
-                
-                // Initialize student group if not exists
-                if (!studentSubmissions[userId]) {
-                    studentSubmissions[userId] = {
-                        info: {
-                            name: '',
-                            email: submission.userEmail || 'No email'
-                        },
-                        submissions: []
-                    };
-                    
-                    // Try to get student name
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', userId));
-                        if (userDoc.exists()) {
-                            studentSubmissions[userId].info.name = userDoc.data().fullName || '';
-                        }
-                    } catch (error) {
-                        console.error("Error fetching user data:", error);
-                    }
-                }
-                
-                const assessmentTitle = submission.assessmentTitle || 'Assessment';
-
-                submission.assessmentTitle = assessmentTitle;
-                
-                // Add to student's submissions
-                studentSubmissions[userId].submissions.push(submission);
+                // Get student info and build student groups...
+                // [Your existing code here...]
             }
             
             // Build HTML by student groups
@@ -241,30 +223,26 @@ async function loadSubmissions(status = 'active') {
                         new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
                         'Date unknown';
                     
+                    // Build card HTML using the activeAssessmentId we fetched ONCE at the beginning
                     submissionsHTML += `
                         <div class="assessment-card" id="submission-${submission.id}">
                             <div class="assessment-card-header">
-                                <div class="assessment-type">${submission.assessmentTitle || assessment.title || 'Assessment'}</div>
+                                <div class="assessment-type">${submission.assessmentTitle || 'Assessment'}</div>
                                 <div class="assessment-duration">${submissionDate}</div>
                             </div>
                             <p>Status: ${submission.status || 'Submitted'}</p>
                             <p>Assessment: ${submission.assessmentTitle || 'Not specified'}</p>
                             <div class="assessment-actions">
-                                <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
                                 ${status === 'active' ? 
-                                    `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
+                                    `<button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
+                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
                                     `<button class="btn btn-primary" onclick="viewPublicUrl('${submission.id}')">View Public URL</button>
-                                    <button id="reopen-btn-${submission.id}" class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
-                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>
-                                    <script>
-                                        // Check if this is current assessment and hide button if not
-                                        (async function() {
-                                            const canReopen = await isCurrentActiveAssessment('${submission.assessmentId}');
-                                            if (!canReopen) {
-                                                document.getElementById('reopen-btn-${submission.id}').style.display = 'none';
-                                            }
-                                        })();
-                                    </script>`
+                                    ${(submission.assessmentId === activeAssessmentId) ? 
+                                        `<button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
+                                        <button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>` : 
+                                        ''
+                                    }
+                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
                                 }
                             </div>
                         </div>
