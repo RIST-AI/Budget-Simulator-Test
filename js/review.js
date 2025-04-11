@@ -869,8 +869,12 @@ async function finaliseAssessment() {
         });
         
         // Generate public URL
-        const baseUrl = window.location.origin + window.location.pathname.replace('trainer-review.html', 'view-assessment.html');
-        const publicUrl = `${origin}${basePath}/view-assessment.html?id=${submissionId}&token=${submission.publicAccessToken}`;
+        const origin = window.location.origin;
+        const pathParts = window.location.pathname.split('/');
+        pathParts.pop(); // Remove current filename (trainer-review.html)
+        const basePath = pathParts.join('/');
+        const publicUrl = `${origin}${basePath}/view-assessment.html?id=${currentSubmissionId}&token=${publicAccessToken}`;
+
         
         // Add comment to comments collection if provided
         if (commentText) {
