@@ -58,6 +58,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (assessmentContent) {
             assessmentContent.style.display = 'block';
         }
+
+        bindRemoveButtonEvents();
     } catch (error) {
         console.error("Error initializing assessment:", error);
         showErrorMessage("Error loading assessment: " + error.message);
