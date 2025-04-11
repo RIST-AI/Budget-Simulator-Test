@@ -244,7 +244,7 @@ async function loadSubmissions(status = 'active') {
                     submissionsHTML += `
                         <div class="assessment-card" id="submission-${submission.id}">
                             <div class="assessment-card-header">
-                                <div class="assessment-type">${submission.assessmentTitle}</div>
+                                <div class="assessment-type">${submission.assessmentTitle || assessment.title || 'Assessment'}</div>
                                 <div class="assessment-duration">${submissionDate}</div>
                             </div>
                             <p>Status: ${submission.status || 'Submitted'}</p>
@@ -1103,8 +1103,8 @@ async function loadAssessmentOptions() {
         const filterSelect = document.getElementById('assessment-filter');
         if (!filterSelect) return;
         
-        // Get all assessments
-        const assessmentsSnapshot = await getDocs(collection(db, 'submissions'));
+        // Get all assessments from the correct collection
+        const assessmentsSnapshot = await getDocs(collection(db, 'assessments'));
         
         // Create options
         let options = '<option value="">All Assessments</option>';
@@ -1120,35 +1120,38 @@ async function loadAssessmentOptions() {
             console.error("Error getting active assessment:", error);
         }
         
-        // Track duplicate titles
-        const titleCounts = {};
-        const assessments = [];
+        // Create a map of assessment IDs to titles
+        const assessmentTitles = {};
         
-        // First pass - collect all assessments and count titles
+        // First pass - collect all assessment titles
         assessmentsSnapshot.forEach(doc => {
             const assessment = doc.data();
-            assessment.id = doc.id;
-            assessments.push(assessment);
-            
-            let title = assessment.title || 'Unnamed Assessment';
-            titleCounts[title] = (titleCounts[title] || 0) + 1;
+            const id = doc.id;
+            const title = assessment.title || 'Unnamed Assessment';
+            assessmentTitles[id] = title;
         });
         
-        // Second pass - create options with numbered duplicates
-        const titleCounters = {};
-        assessments.forEach(assessment => {
-            let title = assessment.title || 'Unnamed Assessment';
-            
-            // Add counter for duplicates
-            if (titleCounts[title] > 1) {
-                titleCounters[title] = (titleCounters[title] || 0) + 1;
-                title += ` (${titleCounters[title]})`;
+        // Now get submissions to count them
+        const submissionsSnapshot = await getDocs(collection(db, 'submissions'));
+        const submissionCounts = {};
+        
+        // Count submissions per assessment
+        submissionsSnapshot.forEach(doc => {
+            const submission = doc.data();
+            const assessmentId = submission.assessmentId;
+            if (assessmentId) {
+                submissionCounts[assessmentId] = (submissionCounts[assessmentId] || 0) + 1;
             }
+        });
+        
+        // Create dropdown options
+        Object.keys(assessmentTitles).forEach(id => {
+            const title = assessmentTitles[id];
+            const count = submissionCounts[id] || 0;
+            const isActive = id === activeAssessmentId;
             
-            // Mark active assessment
-            const isActive = assessment.id === activeAssessmentId;
-            options += `<option value="${assessment.id}" ${isActive ? 'style="font-weight: bold;"' : ''}>
-                ${title} ${isActive ? '(Active)' : ''}
+            options += `<option value="${id}" ${isActive ? 'style="font-weight: bold;"' : ''}>
+                ${title} (${count} submissions) ${isActive ? '(Active)' : ''}
             </option>`;
         });
         

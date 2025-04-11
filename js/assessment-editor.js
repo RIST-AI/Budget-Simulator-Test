@@ -846,9 +846,26 @@ async function updateExistingAssessment(assessmentId) {
             questions,
             scenarios,
             updatedAt: serverTimestamp(),
-            updatedBy: currentUser.uid
+            updatedBy: currentUser.uid,
+            lastModified: new Date().getTime() // Add this for cache busting
         });
-        
+        try {
+            const submissionsQuery = query(
+                collection(db, 'submissions'),
+                where('assessmentId', '==', assessmentId),
+                where('status', 'in', ['submitted', 'feedback_provided'])
+            );
+            
+            const submissionsSnapshot = await getDocs(submissionsQuery);
+            
+            submissionsSnapshot.forEach(async (submissionDoc) => {
+                await updateDoc(doc(db, 'submissions', submissionDoc.id), {
+                    assessmentTitle: title
+                });
+            });
+        } catch (submissionError) {
+            console.error("Error updating submission titles:", submissionError);
+        }
         return assessmentId;
     } catch (error) {
         console.error("Error updating existing assessment:", error);
