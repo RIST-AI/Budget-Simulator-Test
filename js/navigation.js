@@ -6,9 +6,9 @@ import { db, doc, getDoc, collection, query, where, getDocs } from './firebase-c
 // Navigation items configuration
 const navItems = {
   left: [
-    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' }
   ],
   student: [
+    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' }
     { id: 'dashboard-nav-item', text: 'Dashboard', href: 'student-dashboard.html' },
     { id: 'assessment-nav-item', text: 'Assessment', href: 'assessment.html' }
   ],
