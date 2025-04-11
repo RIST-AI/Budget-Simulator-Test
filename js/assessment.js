@@ -302,36 +302,64 @@ async function loadPreviousBudgetData() {
 }
 
 function bindRemoveButtonEvents() {
-    // Bind income item remove buttons
-    document.querySelectorAll('#income-items-container .remove-item-btn').forEach(button => {
+    // Bind remove buttons in income table
+    document.querySelectorAll('#income-table .btn-remove').forEach(button => {
         // Remove any existing event listeners to prevent duplicates
         const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
-        
-        // Add fresh event listener
-        newButton.addEventListener('click', function() {
-            const itemRow = this.closest('.budget-item');
-            if (itemRow) {
-                itemRow.remove();
-                updateBudgetTotals();
-            }
-        });
+        if (button.parentNode) {
+            button.parentNode.replaceChild(newButton, button);
+            
+            // Add fresh event listener
+            newButton.addEventListener('click', function() {
+                const row = this.closest('tr');
+                if (row) {
+                    const tbody = row.closest('tbody');
+                    if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                        row.remove();
+                        updateBudgetTotals();
+                    }
+                }
+            });
+        }
     });
     
-    // Bind expense item remove buttons
-    document.querySelectorAll('#expense-items-container .remove-item-btn').forEach(button => {
+    // Bind remove buttons in expense table
+    document.querySelectorAll('#expense-table .btn-remove').forEach(button => {
         // Remove any existing event listeners to prevent duplicates
         const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
-        
-        // Add fresh event listener
-        newButton.addEventListener('click', function() {
-            const itemRow = this.closest('.budget-item');
-            if (itemRow) {
-                itemRow.remove();
-                updateBudgetTotals();
-            }
-        });
+        if (button.parentNode) {
+            button.parentNode.replaceChild(newButton, button);
+            
+            // Add fresh event listener
+            newButton.addEventListener('click', function() {
+                const row = this.closest('tr');
+                if (row) {
+                    const tbody = row.closest('tbody');
+                    if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                        row.remove();
+                        updateBudgetTotals();
+                    }
+                }
+            });
+        }
+    });
+    
+    // For backwards compatibility with any .remove-item-btn classes
+    document.querySelectorAll('#income-items-container .remove-item-btn, #expense-items-container .remove-item-btn').forEach(button => {
+        // Remove any existing event listeners to prevent duplicates
+        const newButton = button.cloneNode(true);
+        if (button.parentNode) {
+            button.parentNode.replaceChild(newButton, button);
+            
+            // Add fresh event listener
+            newButton.addEventListener('click', function() {
+                const itemRow = this.closest('.budget-item');
+                if (itemRow) {
+                    itemRow.remove();
+                    updateBudgetTotals();
+                }
+            });
+        }
     });
 }
 
