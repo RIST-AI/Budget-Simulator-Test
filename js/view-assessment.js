@@ -79,7 +79,11 @@ function populateAssessmentData(assessment) {
     const studentEmailElement = document.getElementById('student-email');
     const submissionDateElement = document.getElementById('submission-date');
     const submissionStatusElement = document.getElementById('submission-status');
-    
+    const assessmentTitleElement = document.getElementById('assessment-title');
+
+    if (assessmentTitleElement) {
+        assessmentTitleElement.textContent = assessment.assessmentTitle || 'Assessment';
+    }
     if (studentNameElement) studentNameElement.textContent = assessment.studentName || 'Not provided';
     if (studentEmailElement) studentEmailElement.textContent = assessment.userEmail || 'Not provided';
     if (submissionDateElement && assessment.submittedAt) {
