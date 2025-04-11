@@ -75,6 +75,11 @@ async function loadActiveAssessment() {
         if (submissionDoc.exists()) {
             const submission = submissionDoc.data();
             
+                // Skip this submission if it's been deleted
+            if (submission.status === 'deleted') {
+                container.innerHTML = '<div class="info-message">No active assessment available at this time.</div>';
+                return;
+            }
             if (submission.status === 'submitted') {
                 status = 'Submitted';
                 statusClass = 'submitted';
@@ -138,6 +143,7 @@ async function loadPreviousAssessments() {
         const q = query(
             submissionsRef,
             where("userId", "==", currentUser.uid),
+            where("status", "!=", "deleted"), // Add this line to exclude deleted submissions
             orderBy("submittedAt", "desc")
         );
         
@@ -208,8 +214,7 @@ async function loadPreviousAssessments() {
                       `<div class="grade-badge ${grade === 'Satisfactory' ? 'grade-pass' : 'grade-fail'}">${grade}</div>` : 
                       ''}
                     <div class="assessment-actions">
-                        <a href="view-assessment.html?id=${submissionId}&token=${submission.publicAccessToken}" class="btn">${actionText}</a>
-                    </div>
+                    <a href="view-assessment.html?id=${submissionId}${submission.publicAccessToken ? `&token=${submission.publicAccessToken}` : ''}" class="btn">${actionText}</a>                    </div>
                 </div>
             `;
             
