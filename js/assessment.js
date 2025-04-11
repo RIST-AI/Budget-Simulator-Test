@@ -293,10 +293,46 @@ async function loadPreviousBudgetData() {
             
             // Update budget totals
             updateBudgetTotals();
+            bindRemoveButtonEvents();
+
         }
     } catch (error) {
         console.error("Error loading previous budget data:", error);
     }
+}
+
+function bindRemoveButtonEvents() {
+    // Bind income item remove buttons
+    document.querySelectorAll('#income-items-container .remove-item-btn').forEach(button => {
+        // Remove any existing event listeners to prevent duplicates
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add fresh event listener
+        newButton.addEventListener('click', function() {
+            const itemRow = this.closest('.budget-item');
+            if (itemRow) {
+                itemRow.remove();
+                updateBudgetTotals();
+            }
+        });
+    });
+    
+    // Bind expense item remove buttons
+    document.querySelectorAll('#expense-items-container .remove-item-btn').forEach(button => {
+        // Remove any existing event listeners to prevent duplicates
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add fresh event listener
+        newButton.addEventListener('click', function() {
+            const itemRow = this.closest('.budget-item');
+            if (itemRow) {
+                itemRow.remove();
+                updateBudgetTotals();
+            }
+        });
+    });
 }
 
 // Add helper function for row event listeners
