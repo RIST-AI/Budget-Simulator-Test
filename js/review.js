@@ -73,17 +73,31 @@ function showModal(title, message, confirmAction) {
     modalMessage.textContent = message;
     confirmModal.style.display = 'block';
     
-    // Remove previous event listeners
-    const newModalConfirm = modalConfirm.cloneNode(true);
-    modalConfirm.parentNode.replaceChild(newModalConfirm, modalConfirm);
-    
-    // Add new event listener
-    const newConfirmButton = document.getElementById('modal-confirm');
-    if (newConfirmButton) {
-        newConfirmButton.addEventListener('click', () => {
+    // Safer approach to handling event listeners
+    try {
+        // First, remove existing onclick handler
+        modalConfirm.onclick = null;
+        
+        // Create a new fresh reference to ensure we have the element
+        const confirmButton = document.getElementById('modal-confirm');
+        if (confirmButton) {
+            confirmButton.onclick = () => {
+                confirmAction();
+                confirmModal.style.display = 'none';
+            };
+        } else {
+            // If we can't find the button, add a direct listener to modalConfirm
+            modalConfirm.addEventListener('click', () => {
+                confirmAction();
+                confirmModal.style.display = 'none';
+            });
+        }
+    } catch (error) {
+        console.error("Error setting up modal:", error);
+        // Last resort fallback
+        if (confirm(`${title}\n\n${message}`)) {
             confirmAction();
-            confirmModal.style.display = 'none';
-        });
+        }
     }
 }
 
