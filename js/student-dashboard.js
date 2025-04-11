@@ -208,7 +208,7 @@ async function loadPreviousAssessments() {
                       `<div class="grade-badge ${grade === 'Satisfactory' ? 'grade-pass' : 'grade-fail'}">${grade}</div>` : 
                       ''}
                     <div class="assessment-actions">
-                        <a href="view-assessment.html?id=${submissionId}" class="btn">${actionText}</a>
+                        <a href="view-assessment.html?id=${submissionId}&token=${submission.publicAccessToken}" class="btn">${actionText}</a>
                     </div>
                 </div>
             `;

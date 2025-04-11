@@ -862,7 +862,7 @@ async function finaliseAssessment() {
         
         // Generate public URL
         const baseUrl = window.location.origin + window.location.pathname.replace('trainer-review.html', 'view-assessment.html');
-        const publicUrl = `${baseUrl}?id=${currentSubmissionId}&token=${publicAccessToken}`;
+        const publicUrl = `${origin}${basePath}/view-assessment.html?id=${submissionId}&token=${submission.publicAccessToken}`;
         
         // Add comment to comments collection if provided
         if (commentText) {

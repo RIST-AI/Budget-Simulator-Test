@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load assessment data from Firestore
 async function loadAssessment(assessmentId, accessToken) {
     try {
+        if (!assessmentId || !accessToken) {
+            throw new Error('Both assessment ID and access token are required in the URL');
+        }
         // Get assessment document
         const assessmentRef = doc(db, 'submissions', assessmentId);
         const assessmentDoc = await getDoc(assessmentRef);
@@ -50,7 +53,8 @@ async function loadAssessment(assessmentId, accessToken) {
         }
         
         if (!assessment.publicAccessToken || assessment.publicAccessToken !== accessToken) {
-            throw new Error('Invalid access token');
+            console.error(`Token mismatch or missing. URL needs to include token=${assessment.publicAccessToken}`);
+            throw new Error('Invalid access token. The URL may be incomplete or incorrect.');
         }
         
         // Populate assessment data
