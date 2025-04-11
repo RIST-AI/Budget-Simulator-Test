@@ -143,7 +143,7 @@ async function loadPreviousAssessments() {
         const q = query(
             submissionsRef,
             where("userId", "==", currentUser.uid),
-            where("status", "!=", "deleted"), // Add this line to exclude deleted submissions
+            where("status", "in", ["submitted", "feedback_provided", "finalised", "saved"]), // Include all valid statuses
             orderBy("submittedAt", "desc")
         );
         
