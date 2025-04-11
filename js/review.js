@@ -171,17 +171,20 @@ async function loadSubmissions(status = 'active') {
         
         // Process each submission and build HTML
         const processSubmissions = async () => {
-            // Get active assessment ID once at the beginning - OUTSIDE all loops
+            // Get active assessment ID ONCE at the beginning
             let activeAssessmentId = null;
             try {
                 const activeDoc = await getDoc(activeAssessmentRef);
                 if (activeDoc.exists()) {
                     activeAssessmentId = activeDoc.data().assessmentId;
+                    console.log("Active assessment ID:", activeAssessmentId);
+                } else {
+                    console.log("No active assessment found");
                 }
             } catch (error) {
                 console.error("Error getting active assessment:", error);
             }
-            
+
             // Group submissions by student
             const studentSubmissions = {};
             
@@ -190,8 +193,36 @@ async function loadSubmissions(status = 'active') {
                 const submission = docSnapshot.data();
                 submission.id = docSnapshot.id;
                 
-                // Get student info and build student groups...
-                // [Your existing code here...]
+                // Get student info
+                const userId = submission.userId;
+                if (!userId) continue;
+                
+                // Initialize student group if not exists
+                if (!studentSubmissions[userId]) {
+                    studentSubmissions[userId] = {
+                        info: {
+                            name: '',
+                            email: submission.userEmail || 'No email'
+                        },
+                        submissions: []
+                    };
+                    
+                    // Try to get student name
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', userId));
+                        if (userDoc.exists()) {
+                            studentSubmissions[userId].info.name = userDoc.data().fullName || '';
+                        }
+                    } catch (error) {
+                        console.error("Error fetching user data:", error);
+                    }
+                }
+                
+                const assessmentTitle = submission.assessmentTitle || 'Assessment';
+                submission.assessmentTitle = assessmentTitle;
+                
+                // Add to student's submissions
+                studentSubmissions[userId].submissions.push(submission);
             }
             
             // Build HTML by student groups
@@ -223,7 +254,7 @@ async function loadSubmissions(status = 'active') {
                         new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
                         'Date unknown';
                     
-                    // Build card HTML using the activeAssessmentId we fetched ONCE at the beginning
+                    // Use activeAssessmentId from above when building HTML
                     submissionsHTML += `
                         <div class="assessment-card" id="submission-${submission.id}">
                             <div class="assessment-card-header">
@@ -240,7 +271,7 @@ async function loadSubmissions(status = 'active') {
                                     ${(submission.assessmentId === activeAssessmentId) ? 
                                         `<button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
                                         <button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>` : 
-                                        ''
+                                        '<!-- Non-active assessment -->'
                                     }
                                     <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
                                 }
